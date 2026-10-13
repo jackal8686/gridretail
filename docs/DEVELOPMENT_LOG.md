@@ -108,3 +108,103 @@
 - Executed `npm run build`: Passed with static page generation across all 7 routes.
 - Checked responsive layouts across mobile, tablet, and desktop breakpoints.
 - Authored comprehensive Phase 1 audit report in `docs/PHASE_1_AUDIT.md`.
+
+---
+
+## Phase 2: Database Foundation, Authentication, Store Generation Wizard & Live Storefront Preview
+
+### Log Entry: 2026-10-13 (Phase 2 Implementation)
+**Author:** Senior Full-Stack Engineer / Software Architect  
+**Objective:** Deliver database layer, credentials authentication & RBAC, 5-step store generation wizard, dynamic storefront renderer, and responsive preview sandbox while preserving Phase 1 baseline.
+
+### Subphase A: Database Layer & Domain Repositories
+- Installed `mongodb@^7.7.0` (native driver).
+- Designed `src/lib/db/mongodb.ts`:
+  - Connection pooling using cached global promise (`global._mongoClientPromise`) across hot-reloads.
+  - Implemented `getDb()`, `checkDatabaseHealth()`, and `hasMongoConfig()`.
+  - Graceful fallback: Returns `null` if `MONGODB_URI` is unconfigured, enabling smooth test execution and offline dev without crashes.
+- Implemented Repository pattern in `src/lib/repositories/`:
+  - `StoreRepository`: `findAll()`, `findById()`, `findBySlug()`, `create()`, `isSlugAvailable()`.
+  - `ClientRepository`: `findAll()`, `findById()`, `create()`, `incrementStoreCount()`.
+  - `TemplateRepository`: `findAll()`, `findById()`.
+  - `ProductRepository`: `findAll()`, `findByIds()`.
+  - `UserRepository`: `findByEmail()`, `findById()`, `findAll()`, `create()`, `updateStatus()`.
+  - `ActivityRepository`: `findAll()`, `log()`.
+- Implemented validation logic in `src/lib/validation/`:
+  - `slug.ts`: Normalization, reserved keywords check, length check.
+  - `store.ts`: Required field validation, hex color format checks.
+  - `user.ts`: Email validation & normalization, bcrypt hashing, role validation.
+- Authored database scripts:
+  - `src/lib/db/seed.ts`: Upserts 6 stores, 6 clients, 8 templates, 8 products, 5 activities, and creates unique indexes on `slug`, `email`, and `id`.
+  - `src/lib/db/bootstrap-admin.ts`: Provisions default admin user (`admin@gridretail.internal`).
+- Added REST API Route Handlers:
+  - `/api/health`: Database connection status.
+  - `/api/stores`: Store list and store creation with auto-increment of client counts.
+  - `/api/stores/[id]`: Store detail query.
+  - `/api/clients`: Client list and instant prospect creation.
+  - `/api/templates`: Architectural template catalog.
+  - `/api/products`: Product SKU catalog.
+
+### Subphase B: Authentication & Role-Based Access Control (Auth.js)
+- Installed `next-auth@^5.0.0-beta.32` and `bcryptjs@^3.0.3` (with `@types/bcryptjs`).
+- Configured Auth.js in `src/auth.ts`:
+  - `CredentialsProvider` validating against `UserRepository.findByEmail()`.
+  - Verification using `bcryptjs.compare()`.
+  - Proactive rejection of disabled accounts with `ACCOUNT_DISABLED`.
+  - JWT token and session callbacks injecting `id`, `role`, and `status`.
+  - Session configuration with 8-hour token expiration.
+- Configured Route Handler in `src/app/api/auth/[...nextauth]/route.ts`.
+- Configured Edge Middleware in `src/middleware.ts`:
+  - Guards `/dashboard`, `/stores`, `/clients`, `/templates`, `/products`, and `/settings`.
+  - Bypasses `/login`, `/store/*`, `/api/auth/*`, and `/api/health`.
+  - Unauthenticated users redirected to `/login?callbackUrl=...`.
+- Implemented Authentication UI in `src/app/login/page.tsx`:
+  - Centered branded card with logo, email/password form, and password visibility toggle.
+  - Quick-credential fill buttons for test Administrator and Employee accounts.
+  - Wrapped in `<Suspense>` boundary to guarantee clean static export during production build.
+- Integrated Session Management:
+  - Added `SessionWrapper` with `SessionProvider` in `src/app/layout.tsx`.
+  - Updated `AppHeader` and `AppSidebar` to display the active authenticated user's name, email, and role badge.
+  - Wired live `signOut({ callbackUrl: "/login" })` into profile menus.
+- Team & Security Management in Settings:
+  - Created `/api/admin/users` supporting user listing, creation, and disabling/reactivation.
+  - Added "Team & Security" tab in `/settings` allowing administrators to create team accounts and toggle active status.
+
+### Subphase C: Store Generation Wizard (`/stores/new`)
+- Implemented 5-stage interactive wizard in `src/app/stores/new/page.tsx`:
+  - **Stage 1 (Client & Details):** Client selection, quick inline client creation modal, industry selector, store name, real-time slug auto-generation with slug uniqueness validation.
+  - **Stage 2 (Template Selection):** 8 architectural templates with industry-recommended badges, tag filters, layout style inspection, and default palette adoption.
+  - **Stage 3 (Branding & Layout):** Hex color pickers with visual swatches, font typography pairs, layout section toggles (hero, featured products, about, newsletter, footer), and value proposition configuration.
+  - **Stage 4 (Catalog Selection):** Searchable product picker, category filter pills, count indicators, and SKU multi-selection.
+  - **Stage 5 (Review & Deploy):** Comprehensive configuration audit card and deployment execution, immediately redirecting to `/stores/[id]/preview`.
+- Linked all dashboard and stores creation entrypoints:
+  - Header "Create Store" button in `AppHeader`.
+  - Quick actions "New Store Project" in `QuickActions`.
+  - Empty state button in `RecentStoresTable`.
+  - "New Storefront" button in `/stores` page.
+
+### Subphase D: Storefront Renderer & Responsive Preview Sandbox
+- Implemented Public Storefront Renderer in `src/app/store/[slug]/page.tsx`:
+  - Publicly accessible standalone route without dashboard chrome (`AppShell` isolates `/store/*`).
+  - Fetches store by slug and queries associated catalog products.
+  - Dynamically injects brand color tokens (`--store-primary`, `--store-secondary`) and template typography.
+  - Renders active layout blocks: Announcement bar, Hero section with CTA, Value propositions ribbon, Product grid with price formatting, About brand story, Newsletter signup, and Storefront footer.
+  - 404 fallback page for non-existent or inactive store slugs.
+- Implemented Responsive Device Sandbox in `src/app/stores/[id]/preview/page.tsx`:
+  - Device mode controls: Desktop (100%), Tablet (768px), and Mobile (375px).
+  - Secure iframe rendering `/store/${store.slug}` (`sandbox="allow-scripts allow-same-origin"`).
+  - Live refresh trigger and external new-tab preview button.
+  - Store metadata badges (client, template, industry, product count).
+
+### Subphase E: Quality Assurance, Automated Testing & Build Validation
+- Wrote 34 automated unit and integration tests across 4 suites:
+  - `tests/db.test.ts`: Health reporting, fallback detection, seed idempotency, repository CRUD.
+  - `tests/auth.test.ts`: Password hashing, validation, email normalization, role verification, account disabling.
+  - `tests/wizard.test.ts`: Slug normalization, reserved keyword rejection, required field checks, hex color validation.
+  - `tests/storefront.test.ts`: Store resolution by slug, catalog item joining, 404 isolation, immediate persistence.
+- Validation results:
+  - `npm run lint`: 0 errors, 0 warnings.
+  - `npm run type-check`: 0 errors.
+  - `npm run test`: 34 passed, 0 failed.
+  - `npm run build`: Successful compilation across all 19 static/dynamic routes.
+

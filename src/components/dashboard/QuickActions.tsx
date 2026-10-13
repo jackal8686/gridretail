@@ -1,21 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { PlusCircle, Palette, Package, Users, ArrowRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { PlaceholderModal } from "@/components/shared/PlaceholderModal";
 
 export function QuickActions() {
-  const [modalOpen, setModalOpen] = useState(false);
-
   const actions = [
     {
       title: "Create Demo Store",
       description: "Start a client storefront wizard with industry templates & products.",
       icon: PlusCircle,
       iconBg: "bg-[#E2F5E9] text-[#176B4D]",
-      onClick: () => setModalOpen(true),
+      href: "/stores/new",
     },
     {
       title: "Browse Templates",
@@ -41,17 +38,17 @@ export function QuickActions() {
   ];
 
   return (
-    <>
-      <Card>
-        <CardHeader className="py-4">
-          <CardTitle>Quick Actions</CardTitle>
-          <span className="text-xs text-[#66736C]">Fast shortcuts</span>
-        </CardHeader>
-        <CardContent className="p-4 space-y-3">
-          {actions.map((act) => {
-            const Icon = act.icon;
-            const content = (
-              <div className="flex items-start gap-3.5 p-3 rounded-lg border border-[#F0F4F1] hover:border-[#CCD5CE] hover:bg-[#FAF9F6] transition-all group cursor-pointer">
+    <Card>
+      <CardHeader className="py-4">
+        <CardTitle>Quick Actions</CardTitle>
+        <span className="text-xs text-[#66736C]">Fast shortcuts</span>
+      </CardHeader>
+      <CardContent className="p-4 space-y-3">
+        {actions.map((act) => {
+          const Icon = act.icon;
+          return (
+            <Link key={act.title} href={act.href} className="block group">
+              <div className="flex items-start gap-3.5 p-3 rounded-lg border border-[#F0F4F1] hover:border-[#CCD5CE] hover:bg-[#FAF9F6] transition-all cursor-pointer">
                 <div
                   className={`h-9 w-9 rounded-lg ${act.iconBg} flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform`}
                 >
@@ -69,36 +66,10 @@ export function QuickActions() {
                   </p>
                 </div>
               </div>
-            );
-
-            if (act.href) {
-              return (
-                <Link key={act.title} href={act.href} className="block">
-                  {content}
-                </Link>
-              );
-            }
-
-            return (
-              <button
-                key={act.title}
-                type="button"
-                onClick={act.onClick}
-                className="w-full text-left focus-visible:outline-hidden"
-              >
-                {content}
-              </button>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      <PlaceholderModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        featureName="Store Generation Wizard"
-        description="The multi-step Store Generation Engine (industry selection, catalog importer, design customizer, and demo preview generation) is being built for Phase 2."
-      />
-    </>
+            </Link>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   Menu,
   Bell,
@@ -21,6 +22,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [placeholderOpen, setPlaceholderOpen] = useState(false);
@@ -29,6 +31,16 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
   const currentNav = MAIN_NAV_ITEMS.find(
     (item) => item.href === pathname || (item.href !== "/dashboard" && pathname.startsWith(item.href))
   ) || { title: "Dashboard", description: "Overview" };
+
+  const userName = session?.user?.name || "Alex Mercer";
+  const userEmail = session?.user?.email || "alex.mercer@gridretail.internal";
+  const userRole = session?.user?.role || "admin";
+  const initials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase() || "AM";
 
   const handleOpenPlaceholder = (feature: string) => {
     setPlaceholderFeature(feature);
@@ -141,11 +153,11 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
                 setProfileOpen(!profileOpen);
                 setNotificationsOpen(false);
               }}
-              className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#F0F4F1] transition-colors"
+              className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#F0F4F1] transition-colors cursor-pointer"
               aria-label="User profile menu"
             >
               <div className="h-8 w-8 rounded-full bg-[#176B4D] text-white flex items-center justify-center text-xs font-bold shadow-2xs">
-                AM
+                {initials}
               </div>
               <ChevronDown className="h-3.5 w-3.5 text-[#66736C] hidden sm:block" />
             </button>
@@ -153,28 +165,28 @@ export function AppHeader({ onMobileMenuToggle }: AppHeaderProps) {
             {profileOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl border border-[#E4E9E5] shadow-lg py-2 z-50 animate-in fade-in zoom-in-95 duration-150 text-xs">
                 <div className="px-4 py-2.5 border-b border-[#F0F4F1]">
-                  <p className="font-semibold text-[#18231E]">Alex Mercer</p>
-                  <p className="text-[#66736C] text-[11px]">alex.mercer@gridretail.internal</p>
-                  <span className="mt-1.5 inline-block text-[10px] bg-[#E2F5E9] text-[#176B4D] px-2 py-0.5 rounded font-medium">
-                    Internal Admin
+                  <p className="font-semibold text-[#18231E]">{userName}</p>
+                  <p className="text-[#66736C] text-[11px] truncate">{userEmail}</p>
+                  <span className="mt-1.5 inline-block text-[10px] bg-[#E2F5E9] text-[#176B4D] px-2 py-0.5 rounded font-medium capitalize">
+                    {userRole === "admin" ? "Internal Admin" : "Employee"}
                   </span>
                 </div>
                 <div className="py-1">
                   <button
                     type="button"
                     onClick={() => handleOpenPlaceholder("User Profile Editing")}
-                    className="w-full text-left px-4 py-2 text-[#4F5D56] hover:bg-[#FAF9F6] hover:text-[#18231E] flex items-center gap-2"
+                    className="w-full text-left px-4 py-2 text-[#4F5D56] hover:bg-[#FAF9F6] hover:text-[#18231E] flex items-center gap-2 cursor-pointer"
                   >
                     <User className="h-3.5 w-3.5" />
                     <span>Account Profile</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleOpenPlaceholder("Authentication Service")}
-                    className="w-full text-left px-4 py-2 text-[#C43D3D] hover:bg-[#FDEAEA] flex items-center gap-2"
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="w-full text-left px-4 py-2 text-[#C43D3D] hover:bg-[#FDEAEA] flex items-center gap-2 cursor-pointer"
                   >
                     <LogOut className="h-3.5 w-3.5" />
-                    <span>Sign Out (Phase 2 Auth)</span>
+                    <span>Sign Out</span>
                   </button>
                 </div>
               </div>

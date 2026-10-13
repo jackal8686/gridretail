@@ -1,4 +1,9 @@
-export type StoreStatus = "Draft" | "In Progress" | "Pending Review" | "Published";
+export type StoreStatus = 
+  | "Draft" 
+  | "In Progress" 
+  | "Pending Review" 
+  | "Published" 
+  | "Archived";
 
 export type IndustryType = 
   | "Fashion & Apparel"
@@ -9,6 +14,16 @@ export type IndustryType =
   | "Health & Wellness"
   | "Luxury Goods"
   | "Sports & Outdoors";
+
+export interface StoreBranding {
+  primaryColor: string;
+  secondaryColor?: string;
+  fontFamily: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  heroHeadline?: string;
+  heroSubheadline?: string;
+}
 
 export interface Store {
   id: string;
@@ -25,4 +40,21 @@ export interface Store {
   lastUpdated: string;
   createdAt: string;
   description: string;
+  branding?: StoreBranding;
+  enabledSections?: string[];
+  selectedProductIds?: string[];
+  creatorId?: string;
+  creatorName?: string;
+}
+
+export interface CreateStoreInput {
+  name: string;
+  slug: string;
+  clientId: string;
+  industry: IndustryType;
+  templateId: string;
+  description?: string;
+  branding?: Partial<StoreBranding>;
+  enabledSections?: string[];
+  selectedProductIds?: string[];
 }

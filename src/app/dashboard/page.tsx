@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { PlusCircle, SlidersHorizontal } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
@@ -9,12 +10,35 @@ import { RecentStoresTable } from "@/components/dashboard/RecentStoresTable";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentActivityFeed } from "@/components/dashboard/RecentActivityFeed";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PlaceholderModal } from "@/components/shared/PlaceholderModal";
-import { MOCK_METRICS, MOCK_STORES, MOCK_ACTIVITIES } from "@/mock";
+import { MOCK_METRICS, MOCK_ACTIVITIES } from "@/mock";
+import { Store } from "@/types";
 
 export default function DashboardPage() {
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [stores, setStores] = useState<Store[]>([]);
   const [showEmptyState, setShowEmptyState] = useState(false);
+
+  useEffect(() => {
+    async function loadStores() {
+      try {
+        const res = await fetch("/api/stores");
+        if (res.ok) {
+          const data = await res.json();
+          setStores(data.stores || []);
+        }
+      } catch (err) {
+        console.error("Failed to load stores on dashboard:", err);
+      }
+    }
+    loadStores();
+  }, []);
+
+  const dynamicMetrics = {
+    ...MOCK_METRICS,
+    totalStores: stores.length,
+    inProgress: stores.filter((s) => s.status === "In Progress" || s.status === "Draft").length,
+    published: stores.filter((s) => s.status === "Published").length,
+    pendingReview: stores.filter((s) => s.status === "Pending Review").length,
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -38,15 +62,16 @@ export default function DashboardPage() {
           {showEmptyState ? "Show Populated Workspace" : "Preview Empty State"}
         </Button>
 
-        {/* Primary CTA */}
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => setCreateModalOpen(true)}
-          leftIcon={<PlusCircle className="h-4 w-4" />}
-        >
-          Create New Store
-        </Button>
+        {/* Primary CTA linked to the Wizard */}
+        <Link href="/stores/new">
+          <Button
+            variant="primary"
+            size="md"
+            leftIcon={<PlusCircle className="h-4 w-4" />}
+          >
+            Create New Store
+          </Button>
+        </Link>
       </PageHeader>
 
       {showEmptyState ? (
@@ -55,8 +80,8 @@ export default function DashboardPage() {
           title="No storefronts created yet"
           description="Your workspace is fresh. Start by creating a customized client store demo or explore our curated retail templates."
           actionLabel="Create New Store"
-          onAction={() => setCreateModalOpen(true)}
-          secondaryActionLabel="Restore Sample Data"
+          onAction={() => setShowEmptyState(false)}
+          secondaryActionLabel="Restore Workspace Data"
           onSecondaryAction={() => setShowEmptyState(false)}
         />
       ) : (
@@ -64,14 +89,14 @@ export default function DashboardPage() {
         <>
           {/* KPI Cards Row */}
           <section aria-label="Key Performance Indicators">
-            <MetricCards metrics={MOCK_METRICS} />
+            <MetricCards metrics={dynamicMetrics} />
           </section>
 
           {/* Main Content Grid: Tables & Quick Actions */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-start">
             {/* Left 2 Cols: Recent Stores Table */}
             <div className="lg:col-span-2 space-y-6">
-              <RecentStoresTable stores={MOCK_STORES} />
+              <RecentStoresTable stores={stores} />
             </div>
 
             {/* Right Col: Quick Actions & Recent Activity Feed */}
@@ -82,14 +107,6 @@ export default function DashboardPage() {
           </div>
         </>
       )}
-
-      {/* Modal explaining upcoming Phase 2 wizard */}
-      <PlaceholderModal
-        isOpen={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        featureName="Create New Store Wizard"
-        description="The multi-step Store Generation Engine (industry selection, catalog importer, design customizer, and demo preview generation) is being built for Phase 2."
-      />
     </div>
   );
 }

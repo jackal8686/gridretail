@@ -1,4 +1,4 @@
-# GridRetail — Phase 1: Foundation, Architecture & Premium UI
+# GridRetail — Phase 2: Database Foundation, Authentication, Store Generation Wizard & Live Storefront Preview
 
 > **Internal E-Commerce Demo Generation Platform**  
 > Enables account teams and retail solution architects to configure tailored, high-converting demo storefronts for prospective clients within minutes.
@@ -9,26 +9,32 @@
 
 GridRetail is an enterprise platform developed to streamline retail client pitches. Rather than relying on generic slide decks or static screenshots, GridRetail generates interactive, industry-tailored demo storefronts featuring customized product catalogs, branded themes, and responsive layouts.
 
-### Phase 1 Goals Completed:
-- Established a modern Next.js 15 (App Router) + TypeScript + Tailwind CSS foundation.
-- Centralized design system tokens with an emerald green (`#176B4D`) and warm cream (`#FAF9F6`) visual identity.
-- Built a responsive global application shell featuring a collapsible sidebar, mobile drawer, breadcrumb header, notification panel, and user profile affordances.
-- Implemented 6 core application routes: `/` (redirects to dashboard), `/dashboard`, `/stores`, `/clients`, `/templates`, `/products`, and `/settings`.
-- Established strongly typed, isolated mock datasets for stores, clients, templates, products, and platform activities.
-- Implemented search, filtering, and inspect modals across all major screens.
-- Created full architectural, development, and audit documentation in `docs/`.
+### Phase 2 Capabilities Completed:
+- **MongoDB Database Foundation:** Native MongoDB driver integration (`mongodb@7.x`) with connection pooling, cached client promises, indexes, and automatic fallback for offline development.
+- **Role-Based Authentication (Auth.js / NextAuth v5):** Corporate credentials authentication with bcrypt-hashed passwords, JWT sessions (8h maxAge), Next.js Middleware route guarding, and RBAC (`admin` vs `employee`).
+- **Team & Security Administration:** Admin user management API (`/api/admin/users`) with account creation, disabling/reactivation, and interactive UI in Settings.
+- **5-Step Store Generation Wizard (`/stores/new`):**
+  1. *Client & Store Details:* Client selection, inline quick-client creation, industry selection, store name, and auto-generated slug with real-time uniqueness validation.
+  2. *Template Selection:* 8 architectural templates with industry recommendations, tag filters, and color palette inspection.
+  3. *Branding & Storefront Sections:* Hex color pickers, typography pairing, value proposition toggles, and layout section management (hero, featured products, about, newsletter, footer).
+  4. *Catalog Selection:* Searchable, category-filtered product picker with multi-SKU selection and count metrics.
+  5. *Review & Deploy:* Comprehensive configuration summary and one-click store deployment with immediate redirection to the live preview.
+- **Dynamic Storefront Renderer (`/store/[slug]`):** Public, standalone storefront rendering engine with theme colors, typography classes, dynamic layout sections, value propositions, and responsive product catalog grids.
+- **Responsive Preview Suite (`/stores/[id]/preview`):** Device-mode switcher (Desktop, Tablet 768px, Mobile 375px), iframe sandbox, quick refresh, and direct pop-out link.
+- **Complete Test Automation:** 34 automated unit/integration tests (`tests/db.test.ts`, `tests/auth.test.ts`, `tests/wizard.test.ts`, `tests/storefront.test.ts`) covering all core subsystems.
 
 ---
 
 ## 2. Technology Stack
 
-- **Framework:** Next.js 15 (App Router, Server & Client Components)
+- **Framework:** Next.js 15.5.27 (App Router, Server & Client Components)
 - **Language:** TypeScript 5 (Strict typing, no `any`)
 - **Styling:** Tailwind CSS v4 with custom design tokens in `@theme` and `src/config/theme.ts`
+- **Database:** MongoDB 7.x (Native driver, connection pooling, graceful in-memory fallback)
+- **Authentication:** Auth.js (`next-auth@5.0.0-beta.32`) with `bcryptjs` credential hashing & JWT sessions
 - **Iconography:** Lucide React (`lucide-react`)
 - **Fonts:** Geist Sans & Geist Mono via `next/font`
-- **Future Database:** MongoDB (Scheduled for Phase 2)
-- **Future Workflow Engine:** E-Commerce Generator Pipeline (Scheduled for Phase 2)
+- **Test Runner:** Node.js native test runner via `tsx`
 
 ---
 
@@ -39,37 +45,52 @@ gridretail/
 ├── public/                     # Static assets and icons
 ├── src/
 │   ├── app/                    # Next.js App Router routes
-│   │   ├── layout.tsx          # Root layout with AppShell wrapper & metadata
+│   │   ├── layout.tsx          # Root layout with SessionWrapper & AppShell
 │   │   ├── page.tsx            # Entry point (redirects to /dashboard)
-│   │   ├── globals.css         # Tailwind v4 directives & brand CSS variables
+│   │   ├── login/page.tsx      # Corporate authentication portal
 │   │   ├── dashboard/page.tsx  # Workspace overview, KPIs & recent activity
-│   │   ├── stores/page.tsx     # Store management table, search & filters
-│   │   ├── clients/page.tsx    # Client accounts, contacts & demo store counts
-│   │   ├── templates/page.tsx  # 8-template architectural showcase cards
-│   │   ├── products/page.tsx   # Demo product SKU catalog & category filters
-│   │   └── settings/page.tsx   # Tabbed settings panels with live local toggles
+│   │   ├── stores/             # Store management & creation
+│   │   │   ├── page.tsx        # Stores list table with search & filters
+│   │   │   ├── new/page.tsx    # 5-step store generation wizard
+│   │   │   └── [id]/preview/   # Responsive iframe preview suite
+│   │   ├── store/[slug]/       # Standalone generated storefront renderer
+│   │   ├── clients/page.tsx    # Client accounts directory
+│   │   ├── templates/page.tsx  # 8-template architectural showcase
+│   │   ├── products/page.tsx   # Demo product catalog
+│   │   ├── settings/page.tsx   # Platform settings & Team/Security management
+│   │   └── api/                # REST API Route Handlers
+│   │       ├── auth/           # Auth.js route handler
+│   │       ├── health/         # MongoDB health check endpoint
+│   │       ├── admin/users/    # Admin user management endpoint
+│   │       ├── stores/         # Stores list, create & detail endpoints
+│   │       ├── clients/        # Clients list & creation endpoints
+│   │       ├── templates/      # Templates list endpoint
+│   │       └── products/       # Products list endpoint
 │   ├── components/
 │   │   ├── layout/             # AppSidebar, AppHeader, AppShell, PageHeader
 │   │   ├── dashboard/          # MetricCards, RecentStoresTable, QuickActions, ActivityFeed
 │   │   ├── ui/                 # Button, Card, Badge, SearchInput, FilterSelect, Modal, EmptyState
-│   │   └── shared/             # StatusBadge, DemoBanner, PlaceholderModal
+│   │   └── shared/             # StatusBadge, DemoBanner, SessionWrapper
 │   ├── config/
 │   │   ├── theme.ts            # Centralized design tokens (colors, shadows, typography)
 │   │   └── site.ts             # Site metadata and platform constants
 │   ├── constants/
 │   │   └── navigation.ts       # Navigation links, icons, and route definitions
-│   ├── mock/                   # Typed local demonstration datasets (stores, clients, templates, etc.)
-│   ├── types/                  # TypeScript interfaces for all domain models
-│   └── utils/
-│       └── cn.ts               # Class name merging utility
+│   ├── lib/
+│   │   ├── db/                 # mongodb connection pool, seed & bootstrap scripts
+│   │   ├── repositories/       # Store, Client, Template, Product, User, Activity repositories
+│   │   └── validation/         # Zod/custom validators for slug, store, and user
+│   ├── types/                  # TypeScript domain interfaces (Store, Client, User, etc.)
+│   ├── auth.ts                 # Auth.js NextAuth configuration
+│   └── middleware.ts           # Next.js route protection & session verification
+├── tests/                      # Automated test suite (db, auth, wizard, storefront)
 ├── docs/
-│   ├── PHASE_1_AUDIT.md        # Comprehensive Phase 1 implementation audit
-│   ├── ARCHITECTURE.md         # Architecture blueprint and design decisions
+│   ├── PHASE_1_AUDIT.md        # Phase 1 architectural & UI audit
+│   ├── PHASE_2_AUDIT.md        # Comprehensive Phase 2 implementation audit
+│   ├── ARCHITECTURE.md         # Full architecture blueprint & data flow
 │   └── DEVELOPMENT_LOG.md      # Detailed engineering changelog
-├── .env.example                # Safe environment variables template
-├── .gitignore                  # Git ignore rules
+├── .env.example                # Environment variables template
 ├── package.json                # Project dependencies and npm scripts
-├── tsconfig.json               # TypeScript compiler configuration
 └── README.md                   # This project guide
 ```
 
@@ -78,66 +99,59 @@ gridretail/
 ## 4. Getting Started
 
 ### Prerequisites
-- Node.js `v18+` or `v20+` (Tested on `v24.19.0`)
-- npm `v9+` or `v10+` (Tested on `v12.0.2`)
+- Node.js `v18+` or `v20+`
+- npm `v9+` or `v10+`
+- MongoDB instance (Optional; in-memory fallback operates seamlessly without a running MongoDB server)
 
 ### Installation & Development
 
-1. **Clone the repository and enter the directory:**
-   ```bash
-   git clone <repo-url>
-   cd grid
-   ```
-
-2. **Install dependencies:**
+1. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. **Configure environment variables (Optional in Phase 1):**
+2. **Configure environment variables:**
    ```bash
    cp .env.example .env.local
    ```
+   *(Ensure `AUTH_SECRET` is set. If connecting to a local MongoDB, configure `MONGODB_URI`)*.
 
-4. **Start the local development server:**
+3. **Database Setup (Optional if using MongoDB):**
+   ```bash
+   # Seed demonstration catalogs, clients, and templates
+   npm run seed
+
+   # Provision initial administrator account
+   npm run bootstrap-admin
+   ```
+
+4. **Run the development server:**
    ```bash
    npm run dev
    ```
    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-5. **Execute quality checks:**
-   ```bash
-   # Run TypeScript type check
-   npm run build
-
-   # Run ESLint linter
-   npm run lint
-   ```
+5. **Sign In Credentials:**
+   - **Administrator:** `admin@gridretail.internal` / `AdminGrid2026!`
+   - **Employee:** `sarah.chen@gridretail.internal` / `AdminGrid2026!`
+   *(Quick-fill buttons are available on the login page for development convenience)*.
 
 ---
 
-## 5. Design System Tokens
+## 5. Verification & Testing
 
-| Token | Hex Value | Purpose |
-|---|---|---|
-| **Primary** | `#176B4D` | Brand primary actions, active navigation, focus rings |
-| **Primary Dark** | `#104D38` | Hover and pressed button states |
-| **Primary Light** | `#E2F5E9` | Selected route pills, subtle status badges, highlights |
-| **Background** | `#FAF9F6` | Warm cream application background |
-| **Surface** | `#FFFFFF` | Card panels, modals, dropdowns |
-| **Text Primary** | `#18231E` | High-contrast headings and primary labels |
-| **Text Secondary**| `#66736C` | Metadata, helper descriptions, table headers |
-| **Border** | `#E4E9E5` | Structural dividers, input and card borders |
-| **Success** | `#16804A` | Published demo states, live SLAs |
-| **Warning** | `#B7791F` | Pending client reviews, low stock alerts |
-| **Error** | `#C43D3D` | Destructive actions, out of stock alerts |
+Run all quality checks before committing:
 
----
+```bash
+# Execute lint check (ESLint)
+npm run lint
 
-## 6. Phase 2 Roadmap Handoff
+# Execute TypeScript type-checking
+npm run type-check
 
-The Phase 1 foundation is fully decoupled and ready for Phase 2:
-- **Authentication & Roles:** Multi-tenant operator login (NextAuth / custom SSO).
-- **MongoDB Connection:** Schema models for `Store`, `Client`, `Template`, and `Product`.
-- **Store Generation Engine:** Multi-step wizard allowing users to select an industry template, upload a catalog, and deploy a demo storefront.
-- **Dynamic Storefront Preview:** Sandboxed iframe renderer with responsive device switcher (Mobile / Tablet / Desktop).
+# Execute automated test suite (34 tests)
+npm run test
+
+# Execute production build
+npm run build
+```

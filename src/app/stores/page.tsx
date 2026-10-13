@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { PlusCircle, Store as StoreIcon, Eye, RefreshCw } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
@@ -9,17 +10,35 @@ import { FilterSelect } from "@/components/ui/FilterSelect";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Card, CardContent } from "@/components/ui/Card";
-import { PlaceholderModal } from "@/components/shared/PlaceholderModal";
 import { MOCK_STORES } from "@/mock";
 import { Store } from "@/types";
 
 export default function StoresPage() {
+  const [stores, setStores] = useState<Store[]>(MOCK_STORES);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [industryFilter, setIndustryFilter] = useState<string>("ALL");
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-  const [inspectModalOpen, setInspectModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadStores() {
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/stores");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.stores?.length > 0) {
+            setStores(data.stores);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch stores:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadStores();
+  }, []);
 
   const statusOptions = [
     { value: "ALL", label: "All Statuses" },
@@ -40,7 +59,7 @@ export default function StoresPage() {
   ];
 
   const filteredStores = useMemo(() => {
-    return MOCK_STORES.filter((store) => {
+    return stores.filter((store) => {
       const matchesSearch =
         store.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         store.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,17 +73,12 @@ export default function StoresPage() {
 
       return matchesSearch && matchesStatus && matchesIndustry;
     });
-  }, [searchQuery, statusFilter, industryFilter]);
+  }, [stores, searchQuery, statusFilter, industryFilter]);
 
   const resetFilters = () => {
     setSearchQuery("");
     setStatusFilter("ALL");
     setIndustryFilter("ALL");
-  };
-
-  const handleInspect = (store: Store) => {
-    setSelectedStore(store);
-    setInspectModalOpen(true);
   };
 
   return (
@@ -78,14 +92,15 @@ export default function StoresPage() {
           </span>
         }
       >
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => setCreateModalOpen(true)}
-          leftIcon={<PlusCircle className="h-4 w-4" />}
-        >
-          Create New Store
-        </Button>
+        <Link href="/stores/new">
+          <Button
+            variant="primary"
+            size="md"
+            leftIcon={<PlusCircle className="h-4 w-4" />}
+          >
+            Create New Store
+          </Button>
+        </Link>
       </PageHeader>
 
       {/* Filter and Search Bar */}
@@ -127,7 +142,14 @@ export default function StoresPage() {
       </div>
 
       {/* Stores List / Table */}
-      {filteredStores.length === 0 ? (
+      {isLoading ? (
+        <Card>
+          <CardContent className="p-8 text-center text-sm text-[#66736C]">
+            <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2 text-[#176B4D]" />
+            Loading storefront projects...
+          </CardContent>
+        </Card>
+      ) : filteredStores.length === 0 ? (
         <EmptyState
           title="No storefronts match your filters"
           description="Try broadening your search criteria or resetting applied status and industry filters."
@@ -166,7 +188,7 @@ export default function StoresPage() {
                               {store.name}
                             </p>
                             <p className="text-xs text-[#66736C] truncate font-mono">
-                              /{store.slug}
+                              /store/{store.slug}
                             </p>
                           </div>
                         </div>
@@ -182,7 +204,7 @@ export default function StoresPage() {
                       </td>
 
                       <td className="px-6 py-4 text-xs font-semibold text-[#4F5D56]">
-                        {store.productCount} SKUs
+                        {store.productCount || 0} SKUs
                       </td>
 
                       <td className="px-6 py-4">
@@ -199,14 +221,15 @@ export default function StoresPage() {
 
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleInspect(store)}
-                            leftIcon={<Eye className="h-3.5 w-3.5 text-[#176B4D]" />}
-                          >
-                            Inspect
-                          </Button>
+                          <Link href={`/stores/${store.id}/preview`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              leftIcon={<Eye className="h-3.5 w-3.5 text-[#176B4D]" />}
+                            >
+                              Live Preview
+                            </Button>
+                          </Link>
                         </div>
                       </td>
                     </tr>
@@ -216,24 +239,6 @@ export default function StoresPage() {
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Modal Dialogs */}
-      <PlaceholderModal
-        isOpen={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        featureName="Create Store Wizard"
-        description="Store creation workflow will allow selecting a template, importing product data, and setting branding."
-      />
-
-      {selectedStore && (
-        <PlaceholderModal
-          isOpen={inspectModalOpen}
-          onClose={() => setInspectModalOpen(false)}
-          featureName={`Store Inspector: ${selectedStore.name}`}
-          targetPhase="Phase 2 (Store Engine & Live Preview)"
-          description={`Slug: /${selectedStore.slug} | Client: ${selectedStore.clientName} | Template: ${selectedStore.templateName}. Full interactive live preview and client sharing controls will be enabled in Phase 2.`}
-        />
       )}
     </div>
   );

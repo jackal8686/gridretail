@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { DemoBanner } from "@/components/shared/DemoBanner";
@@ -10,7 +11,15 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // If on login screen or rendered standalone storefront preview, render cleanly without dashboard shell
+  const isStandalone = pathname === "/login" || pathname.startsWith("/store/");
+
+  if (isStandalone) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col font-sans">
@@ -42,7 +51,7 @@ export function AppShell({ children }: AppShellProps) {
               <span className="font-semibold text-[#18231E]">GridRetail Platform</span> — Internal Retail Generation Engine
             </div>
             <div className="flex items-center gap-4">
-              <span>Phase 1 Architecture Foundation</span>
+              <span>Phase 2 Database & Engine</span>
               <span>•</span>
               <span className="text-[#176B4D] font-medium">Design System v1.0</span>
             </div>

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Store,
@@ -33,7 +34,17 @@ interface AppSidebarProps {
 
 export function AppSidebar({ mobileOpen = false, onMobileClose }: AppSidebarProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [collapsed, setCollapsed] = useState(false);
+
+  const initials = session?.user?.name
+    ? session.user.name
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .substring(0, 2)
+        .toUpperCase()
+    : "AM";
 
   const toggleCollapsed = () => setCollapsed(!collapsed);
 
@@ -161,21 +172,25 @@ export function AppSidebar({ mobileOpen = false, onMobileClose }: AppSidebarProp
               <div className="flex items-center justify-between text-xs px-2 py-1 bg-white rounded-md border border-[#E4E9E5] text-[#66736C]">
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck className="h-3.5 w-3.5 text-[#16804A]" />
-                  <span>Phase 1 Dev</span>
+                  <span>Phase 2 Platform</span>
                 </span>
                 <span className="text-[10px] bg-[#E2F5E9] text-[#176B4D] px-1.5 py-0.5 rounded font-mono">
-                  v1.0.0
+                  v2.0.0
                 </span>
               </div>
 
               {/* User profile capsule */}
               <div className="flex items-center gap-3 p-2 rounded-lg bg-white border border-[#E4E9E5]">
                 <div className="h-8 w-8 rounded-full bg-[#176B4D] text-white flex items-center justify-center text-xs font-semibold shrink-0">
-                  AM
+                  {initials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-[#18231E] truncate">Alex Mercer</p>
-                  <p className="text-[11px] text-[#66736C] truncate">Retail Solutions Arch.</p>
+                  <p className="text-xs font-semibold text-[#18231E] truncate">
+                    {session?.user?.name || "Alex Mercer"}
+                  </p>
+                  <p className="text-[11px] text-[#66736C] truncate capitalize">
+                    {session?.user?.role === "admin" ? "Internal Admin" : "Retail Employee"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -183,9 +198,9 @@ export function AppSidebar({ mobileOpen = false, onMobileClose }: AppSidebarProp
             <div className="flex flex-col items-center gap-2">
               <div
                 className="h-9 w-9 rounded-full bg-[#176B4D] text-white flex items-center justify-center text-xs font-semibold cursor-pointer"
-                title="Alex Mercer (Retail Solutions Arch.)"
+                title={`${session?.user?.name || "Alex Mercer"} (${session?.user?.role || "admin"})`}
               >
-                AM
+                {initials}
               </div>
             </div>
           )}
