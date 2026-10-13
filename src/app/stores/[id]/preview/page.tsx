@@ -18,6 +18,11 @@ import {
   Type,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  GripVertical,
+  Package,
+  Presentation,
   Share2,
   MessageSquare,
   Send,
@@ -28,6 +33,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ShareModal } from "@/components/shared/ShareModal";
+import { DeliveryModal } from "@/components/shared/DeliveryModal";
 import { Store, PreviewUpdatePayload, StoreFeedback } from "@/types";
 import { cn } from "@/utils/cn";
 
@@ -53,6 +59,7 @@ export default function StoreCustomizerPreviewPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>("branding");
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
 
   // Feedback State
   const [feedbackList, setFeedbackList] = useState<StoreFeedback[]>([]);
@@ -82,6 +89,14 @@ export default function StoreCustomizerPreviewPage() {
     "newsletter",
     "footer",
   ]);
+  const [orderedSections, setOrderedSections] = useState<string[]>([
+    "hero",
+    "featured_products",
+    "about",
+    "newsletter",
+    "footer",
+  ]);
+  const [draggedSectionIndex, setDraggedSectionIndex] = useState<number | null>(null);
 
   // Persistence & Save State
   const [isSaving, setIsSaving] = useState(false);
@@ -117,6 +132,11 @@ export default function StoreCustomizerPreviewPage() {
           setCtaText(s.branding?.ctaText || "Explore Catalog");
           if (s.enabledSections && s.enabledSections.length > 0) {
             setEnabledSections(s.enabledSections);
+          }
+          if (s.orderedSections && s.orderedSections.length > 0) {
+            setOrderedSections(s.orderedSections);
+          } else {
+            setOrderedSections(["hero", "featured_products", "about", "newsletter", "footer"]);
           }
 
           // Fetch feedback
@@ -175,7 +195,11 @@ export default function StoreCustomizerPreviewPage() {
           `Curated ${store.industry} collection designed for modern living.`) ||
       aboutText !== (store.branding?.aboutText || store.description || "") ||
       ctaText !== (store.branding?.ctaText || "Explore Catalog") ||
-      JSON.stringify(enabledSections) !== JSON.stringify(store.enabledSections || []);
+      JSON.stringify(enabledSections) !== JSON.stringify(store.enabledSections || []) ||
+      JSON.stringify(orderedSections) !==
+        JSON.stringify(
+          store.orderedSections || ["hero", "featured_products", "about", "newsletter", "footer"]
+        );
 
     setHasUnsavedChanges(isDirty);
 
@@ -194,6 +218,7 @@ export default function StoreCustomizerPreviewPage() {
         ctaText,
       },
       enabledSections,
+      orderedSections,
     };
 
     sendPreviewUpdate(payload);
@@ -210,6 +235,7 @@ export default function StoreCustomizerPreviewPage() {
     aboutText,
     ctaText,
     enabledSections,
+    orderedSections,
     sendPreviewUpdate,
   ]);
 
@@ -239,6 +265,7 @@ export default function StoreCustomizerPreviewPage() {
             ctaText,
           },
           enabledSections,
+          orderedSections,
         });
       } else if (data.type === "GRIDRETAIL_PREVIEW_ACK") {
         setLastAckTime(data.timestamp);
@@ -259,6 +286,7 @@ export default function StoreCustomizerPreviewPage() {
     aboutText,
     ctaText,
     enabledSections,
+    orderedSections,
     sendPreviewUpdate,
   ]);
 
@@ -285,6 +313,7 @@ export default function StoreCustomizerPreviewPage() {
           ctaText: ctaText.trim(),
         },
         enabledSections,
+        orderedSections,
       };
 
       const res = await fetch(`/api/stores/${store.id}`, {
@@ -322,6 +351,32 @@ export default function StoreCustomizerPreviewPage() {
         ? prev.filter((s) => s !== sectionId)
         : [...prev, sectionId]
     );
+  };
+
+  const moveSection = (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= orderedSections.length) return;
+    const updated = [...orderedSections];
+    const [moved] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, moved);
+    setOrderedSections(updated);
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedSectionIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (index: number) => {
+    if (draggedSectionIndex === null || draggedSectionIndex === index) return;
+    const updated = [...orderedSections];
+    const [moved] = updated.splice(draggedSectionIndex, 1);
+    updated.splice(index, 0, moved);
+    setOrderedSections(updated);
+    setDraggedSectionIndex(null);
   };
 
   const getContainerWidth = () => {
@@ -408,6 +463,25 @@ export default function StoreCustomizerPreviewPage() {
             {isSidebarOpen ? "Hide Controls" : "Edit Storefront"}
           </Button>
 
+          <Link href={`/stores/${store.id}/present`}>
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Presentation className="h-3.5 w-3.5 text-[#176B4D]" />}
+            >
+              Present
+            </Button>
+          </Link>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsDeliveryModalOpen(true)}
+            leftIcon={<Package className="h-3.5 w-3.5 text-[#176B4D]" />}
+          >
+            Export &amp; Deliver
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -447,6 +521,13 @@ export default function StoreCustomizerPreviewPage() {
         storeId={store.id}
         storeName={store.name}
         clientName={store.clientName}
+      />
+
+      {/* Delivery & Export Modal Dialog */}
+      <DeliveryModal
+        store={store}
+        isOpen={isDeliveryModalOpen}
+        onClose={() => setIsDeliveryModalOpen(false)}
       />
 
       {/* Main Workspace: Left Customizer Panel + Central Canvas */}
@@ -800,41 +881,157 @@ export default function StoreCustomizerPreviewPage() {
                 </div>
               )}
 
-              {/* TAB 3: SECTIONS */}
+              {/* TAB 3: SECTIONS (Advanced Drag-and-Drop Section Builder) */}
               {activeTab === "sections" && (
                 <div className="space-y-3">
-                  <p className="text-[11px] text-[#66736C]">
-                    Toggle storefront layout blocks on or off. Changes update instantly on the canvas.
-                  </p>
+                  <div className="flex items-center justify-between pb-1 border-b border-[#E4E9E5]">
+                    <div>
+                      <h4 className="font-bold text-[#18231E]">Section Layout &amp; Reorder</h4>
+                      <p className="text-[11px] text-[#66736C]">
+                        Drag handles or use arrows to change sequence. Canvas updates in real time.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOrderedSections([
+                          "hero",
+                          "featured_products",
+                          "about",
+                          "newsletter",
+                          "footer",
+                        ])
+                      }
+                      className="text-[10px] text-[#176B4D] hover:underline font-semibold cursor-pointer shrink-0 ml-2"
+                    >
+                      Reset Order
+                    </button>
+                  </div>
 
-                  {[
-                    { id: "hero", label: "Hero Banner & Pitch Message" },
-                    { id: "featured_products", label: "Featured Product Catalog Grid" },
-                    { id: "about", label: "Brand Story & Heritage" },
-                    { id: "newsletter", label: "Newsletter Subscription Box" },
-                    { id: "footer", label: "Storefront Legal & Navigation Footer" },
-                  ].map((sec) => {
-                    const isChecked = enabledSections.includes(sec.id);
-                    return (
-                      <label
-                        key={sec.id}
-                        className={cn(
-                          "flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all",
-                          isChecked
-                            ? "bg-[#E2F5E9]/50 border-[#176B4D] text-[#18231E]"
-                            : "bg-[#FAF9F6] border-[#CCD5CE] text-[#66736C]"
-                        )}
-                      >
-                        <span className="font-medium">{sec.label}</span>
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleSection(sec.id)}
-                          className="h-4 w-4 text-[#176B4D] rounded-sm focus:ring-[#176B4D] accent-[#176B4D]"
-                        />
-                      </label>
-                    );
-                  })}
+                  <div className="space-y-2">
+                    {orderedSections.map((secId, index) => {
+                      const metaMap: Record<string, { label: string; desc: string }> = {
+                        hero: {
+                          label: "Hero Banner & Pitch Message",
+                          desc: "Top promotional banner, headlines & call to action",
+                        },
+                        featured_products: {
+                          label: "Featured Product Catalog",
+                          desc: "Interactive catalog grid, price tags & quick add",
+                        },
+                        about: {
+                          label: "Brand Story & Heritage",
+                          desc: "Tailored brand narrative for prospective client",
+                        },
+                        newsletter: {
+                          label: "Newsletter Subscription",
+                          desc: "Audience capture and VIP email newsletter sign-up",
+                        },
+                        footer: {
+                          label: "Storefront Legal & Footer",
+                          desc: "Storefront copyright & GridRetail engine badge",
+                        },
+                      };
+
+                      const meta = metaMap[secId] || {
+                        label: secId,
+                        desc: "Storefront section block",
+                      };
+                      const isChecked = enabledSections.includes(secId);
+                      const isDragging = draggedSectionIndex === index;
+
+                      return (
+                        <div
+                          key={secId}
+                          draggable
+                          onDragStart={() => handleDragStart(index)}
+                          onDragOver={handleDragOver}
+                          onDrop={() => handleDrop(index)}
+                          onDragEnd={() => setDraggedSectionIndex(null)}
+                          className={cn(
+                            "flex items-center gap-2 p-2.5 rounded-xl border transition-all select-none",
+                            isDragging && "opacity-40 border-dashed border-[#176B4D] bg-[#E2F5E9]",
+                            isChecked
+                              ? "bg-white border-[#CCD5CE] shadow-2xs hover:border-[#176B4D]"
+                              : "bg-[#FAF9F6] border-[#E4E9E5] text-[#8F9D95]"
+                          )}
+                        >
+                          {/* Drag Handle */}
+                          <div
+                            className="cursor-grab active:cursor-grabbing text-stone-400 hover:text-stone-700 p-0.5"
+                            title="Drag to reorder section"
+                          >
+                            <GripVertical className="h-4 w-4" />
+                          </div>
+
+                          {/* Order Number Badge */}
+                          <span
+                            className={cn(
+                              "w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 border",
+                              isChecked
+                                ? "bg-[#E2F5E9] text-[#176B4D] border-[#176B4D]/30"
+                                : "bg-stone-100 text-stone-400 border-stone-200"
+                            )}
+                          >
+                            {index + 1}
+                          </span>
+
+                          {/* Section Meta Details */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={cn(
+                                  "font-bold text-xs truncate",
+                                  isChecked ? "text-[#18231E]" : "text-[#8F9D95]"
+                                )}
+                              >
+                                {meta.label}
+                              </span>
+                              {!isChecked && (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-200 text-stone-600 font-semibold uppercase">
+                                  Hidden
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-[#66736C] truncate">{meta.desc}</p>
+                          </div>
+
+                          {/* Accessible Move Up / Down Buttons */}
+                          <div className="flex items-center gap-0.5">
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => moveSection(index, "up")}
+                              className="p-1 rounded hover:bg-stone-200/60 disabled:opacity-20 disabled:pointer-events-none transition-colors text-stone-600"
+                              title="Move section up"
+                              aria-label={`Move ${meta.label} up`}
+                            >
+                              <ChevronUp className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={index === orderedSections.length - 1}
+                              onClick={() => moveSection(index, "down")}
+                              className="p-1 rounded hover:bg-stone-200/60 disabled:opacity-20 disabled:pointer-events-none transition-colors text-stone-600"
+                              title="Move section down"
+                              aria-label={`Move ${meta.label} down`}
+                            >
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Visibility Checkbox Toggle */}
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSection(secId)}
+                            className="h-4 w-4 text-[#176B4D] rounded-sm focus:ring-[#176B4D] accent-[#176B4D] cursor-pointer ml-1"
+                            title={isChecked ? "Hide section" : "Enable section"}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 

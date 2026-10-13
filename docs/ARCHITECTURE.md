@@ -101,3 +101,32 @@ flowchart TD
 - **Pluggable Storage Abstraction:** `StorageProvider` interface implemented by `LocalStorageProvider` (dev fallback) and `S3StorageProvider` (production S3/R2).
 - **Validation:** Strict MIME validation (PNG, JPG, WEBP, SVG) and 5MB size limit.
 - **Asset Attachment:** Uploads via `POST /api/stores/[id]/media` automatically link generated URLs to the store's branding document and notify the customizer.
+
+### E. Storefront Delivery & Export Engine
+- **Native ZIP Packaging (`ZipBuilder`):** Zero-dependency streaming PKZIP 2.0 generator utilizing Node.js `zlib.deflateRawSync` and bitwise CRC32 calculation.
+- **Bundle Compiler (`ExportService`):** Assembles self-contained production bundles containing:
+  - `index.html`: Fully styled, statically rendered responsive storefront adhering to `orderedSections` and `enabledSections`.
+  - `styles.css`: Complete CSS stylesheet with typography rules and branded color custom properties.
+  - `store-manifest.json`: Machine-readable metadata capturing store, layout, branding, and catalog configuration.
+  - `products.json`: Full product catalog JSON.
+  - `README.md`: Turnkey deployment instructions for Vercel, Netlify, Cloudflare Pages, AWS S3, Nginx, and Apache.
+- **Delivery Persistence (`DeliveryRepository`):** Tracks delivery records in MongoDB collection `deliveries` with SHA-256 cryptographic verification hashes and byte counts.
+- **Direct Download API:** `/api/stores/[id]/deliveries/[deliveryId]/download` streams ZIP packages with attachment headers.
+
+### F. Email Notification Pipeline & Provider Abstraction
+- **Provider Architecture (`EmailProvider`):** Abstract interface implemented by `ConsoleMockEmailProvider` (dev/testing outbox) and `SmtpEmailProvider` (production SMTP relay).
+- **Graceful Fallback:** If SMTP credentials are unset, the system logs dispatches without throwing exceptions or blocking user workflows.
+- **Durable Notification Outbox (`NotificationRepository`):** Stores all dispatched emails in MongoDB collection `notifications`.
+- **Automated Workflow Hooks:** Dispatches branded, HTML-sanitized emails when clients submit review feedback, request modifications, or approve store proposals.
+
+### G. Advanced Drag-and-Drop Storefront Builder
+- **Dynamic Layout Sequencing:** Store model extended with `orderedSections: string[]` governing layout section display order.
+- **Accessible UI Reordering:** Tab 3 ("Sections") provides HTML5 drag-and-drop handles (`GripVertical`) and keyboard-accessible reorder controls (`ChevronUp`, `ChevronDown`).
+- **Live Preview Synchronization:** Broadcasts `orderedSections` live via `postMessage`, updating `StorefrontView.tsx` without page reloads.
+
+### H. Client Presentation Mode Walkthrough
+- **Full-Viewport Pitch Deck (`/stores/[id]/present`):** Distraction-free presentation route for sales representatives.
+- **6-Stage Pitch Progression:** Executive Vision → Curated Catalog → Brand Narrative → Audience Engagement → Live Interactive Simulator → Commercial Delivery Handoff.
+- **Private Presenter Notes Drawer:** Collapsible talking points and objection-handling strategies isolated for each slide.
+- **Keyboard Navigation:** Native listeners for `Right`, `Left`, `Space`, `N` (toggle notes), and `Escape` (exit).
+

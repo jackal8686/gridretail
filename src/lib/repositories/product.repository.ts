@@ -71,6 +71,10 @@ export const ProductRepository = {
     return this.findAll({ ids });
   },
 
+  async findByCategory(category: string): Promise<Product[]> {
+    return this.findAll({ category });
+  },
+
   _resetMemory(products?: Product[]) {
     memoryProducts = products ? [...products] : [...MOCK_PRODUCTS];
   },

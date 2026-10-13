@@ -1,7 +1,7 @@
-# GridRetail — Phase 3: Visual Customizer, Client Sharing, Feedback Workflow & Cloud Media
+# GridRetail — Phase 4: Delivery Engine, Email Notifications, Drag-and-Drop Builder & Client Presentation Mode
 
-> **Internal E-Commerce Demo Generation Platform**  
-> Enables account teams and retail solution architects to configure tailored, high-converting demo storefronts for prospective clients within minutes.
+> **Internal E-Commerce Demo Generation & Delivery Platform**  
+> Enables account teams and retail solution architects to configure tailored demo storefronts, pitch live to clients, reorder layout sections dynamically, and export self-contained production delivery bundles within minutes.
 
 ---
 
@@ -9,26 +9,27 @@
 
 GridRetail is an enterprise platform developed to streamline retail client pitches. Rather than relying on generic slide decks or static screenshots, GridRetail generates interactive, industry-tailored demo storefronts featuring customized product catalogs, branded themes, and responsive layouts.
 
-### Phase 3 Capabilities Completed:
-- **Visual Storefront Customizer (`/stores/[id]/preview`):**
-  - Integrated 3-panel professional customizer interface (Branding, Content, Sections, Review).
-  - Bidirectional, origin-validated `postMessage` protocol syncing edits directly into the live preview iframe without page reload.
-  - Server-side persistence via `PATCH /api/stores/[id]` with unsaved change detection, saving states, and rollback protection.
-- **Secure Tokenized Client Preview Sharing (`/preview/[token]`):**
-  - Bearer links generated using cryptographically secure random tokens (SHA-256 hash storage).
-  - Configurable expiration periods (24h, 3 days, 7 days, 14 days) and immediate revocation controls via `PATCH /api/stores/[id]/shares/[shareId]`.
-  - Public preview access strictly scoped to the designated storefront without requiring a GridRetail user login.
-  - Hardened security headers, access counters, and clean unavailable/expired link screens.
-- **Client Feedback & Approval Workflow:**
-  - Public floating review drawer (`ClientFeedbackDrawer`) on tokenized client previews.
-  - Formal proposal sign-off transitions (`Approved` / `Changes Requested`) with audit logging.
-  - Real-time conversation threads between clients and internal account architects.
-- **Cloud Media Management:**
-  - Multi-provider storage abstraction (`LocalStorageProvider` + `S3StorageProvider`).
-  - Integrated logo and hero banner upload controls with MIME type verification (PNG, JPG, WEBP, SVG) and 5MB size limits.
-  - Immediate attachment to storefront branding documents and live canvas synchronization.
+### Phase 4 Capabilities Completed:
+- **E-Commerce Delivery & Export Engine:**
+  - Zero-dependency streaming PKZIP 2.0 compression engine (`ZipBuilder`) with CRC32 integrity checks.
+  - Production bundle compiler (`ExportService`) generating self-contained static storefront packages (`index.html`, `styles.css`, `store-manifest.json`, `products.json`, `README.md`).
+  - Persistent delivery history (`DeliveryRepository`) with SHA-256 cryptographic verification and direct streaming download endpoints (`/api/stores/[id]/deliveries/[deliveryId]/download`).
+  - Modal interface (`DeliveryModal`) integrated across the customizer and presentation decks.
+- **Email Notification Pipeline & Provider Abstraction:**
+  - Event-driven notifications with durable MongoDB repository logging (`NotificationRepository`).
+  - Pluggable email provider abstraction (`ConsoleMockEmailProvider` and `SmtpEmailProvider`) with automatic graceful fallback.
+  - Branded responsive HTML and plain-text templates with strict HTML sanitization against XSS.
+  - Automatic dispatch triggers wired into client review lifecycle (`feedback_submitted`, `changes_requested`, `proposal_approved`).
+- **Advanced Drag-and-Drop Storefront Builder:**
+  - Interactive section reordering in Tab 3 ("Sections") via HTML5 drag-and-drop handles and accessible keyboard controls (`ChevronUp`, `ChevronDown`).
+  - Schema extension (`orderedSections`) persisted to MongoDB via `PATCH /api/stores/[id]`.
+  - Live bidirectional `postMessage` synchronization updating the storefront canvas instantly without page reloads.
+- **Client Presentation Mode (`/stores/[id]/present`):**
+  - Distraction-free, full-viewport pitch walkthrough route for executive sales demonstrations.
+  - 6 guided presentation slides (Executive Vision, Curated Catalog, Brand Narrative, Audience Engagement, Live Interactive Simulator, Commercial Next Steps).
+  - Private presenter talking points drawer, viewport device toggles (Desktop, Tablet, Mobile), and keyboard shortcut navigation (`Right`, `Left`, `Space`, `N`, `Esc`).
 - **Comprehensive Automated Test Suite:**
-  - 42 automated tests running via Node.js native test runner (`tsx --test tests/**/*.test.ts`).
+  - 63 automated unit tests passing across 12 test suites with zero failures.
 
 ---
 

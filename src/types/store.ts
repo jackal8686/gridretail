@@ -46,6 +46,7 @@ export interface Store {
   description: string;
   branding?: StoreBranding;
   enabledSections?: string[];
+  orderedSections?: string[];
   selectedProductIds?: string[];
   creatorId?: string;
   creatorName?: string;
@@ -60,5 +61,6 @@ export interface CreateStoreInput {
   description?: string;
   branding?: Partial<StoreBranding>;
   enabledSections?: string[];
+  orderedSections?: string[];
   selectedProductIds?: string[];
 }

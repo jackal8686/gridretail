@@ -46,6 +46,15 @@ export function StorefrontView({
       "footer",
     ]
   );
+  const [orderedSections, setOrderedSections] = useState<string[]>(
+    initialStore.orderedSections || [
+      "hero",
+      "featured_products",
+      "about",
+      "newsletter",
+      "footer",
+    ]
+  );
   const [products] = useState<Product[]>(initialProducts);
 
   // Live postMessage Listener for Customizer
@@ -94,6 +103,10 @@ export function StorefrontView({
           setEnabledSections(payload.enabledSections);
         }
 
+        if (payload.orderedSections && Array.isArray(payload.orderedSections)) {
+          setOrderedSections(payload.orderedSections);
+        }
+
         // Acknowledge receipt
         if (event.source && typeof (event.source as Window).postMessage === "function") {
           (event.source as Window).postMessage(
@@ -113,6 +126,231 @@ export function StorefrontView({
     template?.style === "High-Tech Dark" ||
     template?.style === "Luxury Haute" ||
     template?.style === "Bold Grid";
+
+  const renderSectionBlock = (sectionId: string) => {
+    if (!enabledSections.includes(sectionId)) return null;
+
+    switch (sectionId) {
+      case "hero":
+        return (
+          <section
+            key="hero"
+            className="py-16 md:py-24 px-6 max-w-6xl mx-auto text-center space-y-6 animate-in fade-in relative"
+          >
+            {branding.bannerUrl && (
+              <div className="mb-6 max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-md max-h-[360px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={branding.bannerUrl}
+                  alt={`${storeName} Hero Banner`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-2 border"
+              style={{
+                borderColor: branding.primaryColor,
+                color: branding.primaryColor,
+                backgroundColor: isDarkTemplate ? "rgba(255,255,255,0.05)" : "rgba(23,107,77,0.08)",
+              }}
+            >
+              <span>{initialStore.industry}</span>
+              <span>•</span>
+              <span>{template?.style || "Contemporary"}</span>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight">
+              {branding.heroHeadline || `Welcome to ${storeName}`}
+            </h1>
+
+            <p className="text-base sm:text-lg max-w-2xl mx-auto opacity-75 font-normal leading-relaxed">
+              {branding.heroSubheadline ||
+                `Explore our bespoke collection designed specifically for ${initialStore.clientName}.`}
+            </p>
+
+            <div className="pt-4 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                className="px-6 py-3 rounded-lg text-sm font-semibold text-white shadow-md transition-all hover:opacity-90 hover:shadow-lg flex items-center gap-2"
+                style={{ backgroundColor: branding.primaryColor }}
+              >
+                <span>{branding.ctaText || "Explore Catalog"}</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </section>
+        );
+
+      case "featured_products":
+        return (
+          <React.Fragment key="featured_products">
+            {/* VALUE PROPOSITIONS BAR */}
+            <section
+              className="border-y py-6 px-6"
+              style={{
+                borderColor: isDarkTemplate ? "#1E293B" : "#E4E9E5",
+                backgroundColor: isDarkTemplate ? "#090D16" : "#FFFFFF",
+              }}
+            >
+              <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center sm:text-left text-xs">
+                <div className="flex items-center justify-center sm:justify-start gap-3">
+                  <Truck className="h-5 w-5 text-emerald-500 shrink-0" />
+                  <div>
+                    <p className="font-semibold">Complimentary Courier Delivery</p>
+                    <p className="opacity-70">On all domestic retail orders</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center sm:justify-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
+                  <div>
+                    <p className="font-semibold">Verified Authenticity Guarantee</p>
+                    <p className="opacity-70">Direct provenance from artisans</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center sm:justify-start gap-3">
+                  <RotateCcw className="h-5 w-5 text-emerald-500 shrink-0" />
+                  <div>
+                    <p className="font-semibold">30-Day Effortless Returns</p>
+                    <p className="opacity-70">Full satisfaction assurance</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* FEATURED PRODUCTS GRID */}
+            <section className="py-16 px-6 max-w-6xl mx-auto">
+              <div
+                className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-3 border-b pb-4"
+                style={{ borderColor: isDarkTemplate ? "#1E293B" : "#E4E9E5" }}
+              >
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wider opacity-70">
+                    Featured Demonstration Catalog
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1">
+                    Selected Pieces ({products.length})
+                  </h2>
+                </div>
+                <span className="text-xs opacity-75 font-medium">
+                  Live interactive pitch items
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((prod) => (
+                  <div
+                    key={prod.id}
+                    className="rounded-xl border overflow-hidden flex flex-col justify-between group transition-all hover:shadow-lg"
+                    style={{
+                      backgroundColor: isDarkTemplate ? "#1E293B" : "#FFFFFF",
+                      borderColor: isDarkTemplate ? "#334155" : "#E4E9E5",
+                    }}
+                  >
+                    <div
+                      className={cn(
+                        "h-48 flex items-center justify-center text-xl font-bold tracking-wider relative overflow-hidden transition-transform group-hover:scale-102",
+                        prod.thumbnailColor
+                      )}
+                    >
+                      <span>{prod.name.slice(0, 2).toUpperCase()}</span>
+                      <span className="absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 text-stone-800 shadow-2xs">
+                        {prod.category}
+                      </span>
+                    </div>
+
+                    <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                      <div>
+                        <h3 className="font-bold text-base line-clamp-1">{prod.name}</h3>
+                        <p className="text-xs opacity-70 mt-1 line-clamp-2 leading-relaxed">
+                          {prod.description}
+                        </p>
+                      </div>
+
+                      <div
+                        className="pt-3 border-t flex items-center justify-between"
+                        style={{ borderColor: isDarkTemplate ? "#334155" : "#F0F4F1" }}
+                      >
+                        <div>
+                          <span className="text-xs opacity-60">Price</span>
+                          <p className="text-base font-bold">
+                            ${prod.price.toFixed(2)}{" "}
+                            <span className="text-[10px] opacity-70 font-normal">{prod.currency}</span>
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                          style={{ backgroundColor: branding.primaryColor }}
+                        >
+                          Quick Add
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </React.Fragment>
+        );
+
+      case "about":
+        return (
+          <section
+            key="about"
+            className="py-16 px-6 border-t"
+            style={{
+              borderColor: isDarkTemplate ? "#1E293B" : "#E4E9E5",
+              backgroundColor: isDarkTemplate ? "#0B1120" : "#FFFFFF",
+            }}
+          >
+            <div className="max-w-4xl mx-auto text-center space-y-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">
+                About {storeName}
+              </span>
+              <h2 className="text-3xl font-bold tracking-tight">
+                Designed for {initialStore.clientName}
+              </h2>
+              <p className="text-sm sm:text-base opacity-75 leading-relaxed max-w-2xl mx-auto">
+                {branding.aboutText ||
+                  initialStore.description ||
+                  `Every element of this demonstration has been tailored to reflect ${initialStore.clientName}'s distinctive brand heritage, modern e-commerce requirements, and audience expectations.`}
+              </p>
+            </div>
+          </section>
+        );
+
+      case "newsletter":
+        return (
+          <section key="newsletter" className="py-16 px-6 max-w-xl mx-auto text-center space-y-4">
+            <h3 className="text-2xl font-bold tracking-tight">Stay in Touch</h3>
+            <p className="text-xs opacity-75">
+              Subscribe to receive exclusive collection updates and private showroom previews.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                placeholder="Enter client email address"
+                className="w-full rounded-lg border px-3.5 py-2 text-xs bg-white text-stone-900 focus:outline-hidden"
+                style={{ borderColor: "#E4E9E5" }}
+              />
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-white whitespace-nowrap"
+                style={{ backgroundColor: branding.primaryColor }}
+              >
+                Subscribe
+              </button>
+            </div>
+          </section>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div
@@ -182,222 +420,15 @@ export function StorefrontView({
         </div>
       </header>
 
-      {/* Storefront Main Content */}
+      {/* Storefront Main Content - Dynamically Ordered */}
       <main className="flex-1">
-        {/* HERO SECTION */}
-        {enabledSections.includes("hero") && (
-          <section
-            className="py-16 md:py-24 px-6 max-w-6xl mx-auto text-center space-y-6 animate-in fade-in relative"
-          >
-            {branding.bannerUrl && (
-              <div className="mb-6 max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-md max-h-[360px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={branding.bannerUrl}
-                  alt={`${storeName} Hero Banner`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-
-            <div
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-2 border"
-              style={{
-                borderColor: branding.primaryColor,
-                color: branding.primaryColor,
-                backgroundColor: isDarkTemplate ? "rgba(255,255,255,0.05)" : "rgba(23,107,77,0.08)",
-              }}
-            >
-              <span>{initialStore.industry}</span>
-              <span>•</span>
-              <span>{template?.style || "Contemporary"}</span>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight">
-              {branding.heroHeadline || `Welcome to ${storeName}`}
-            </h1>
-
-            <p className="text-base sm:text-lg max-w-2xl mx-auto opacity-75 font-normal leading-relaxed">
-              {branding.heroSubheadline ||
-                `Explore our bespoke collection designed specifically for ${initialStore.clientName}.`}
-            </p>
-
-            <div className="pt-4 flex flex-wrap justify-center gap-3">
-              <button
-                type="button"
-                className="px-6 py-3 rounded-lg text-sm font-semibold text-white shadow-md transition-all hover:opacity-90 hover:shadow-lg flex items-center gap-2"
-                style={{ backgroundColor: branding.primaryColor }}
-              >
-                <span>{branding.ctaText || "Explore Catalog"}</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </section>
-        )}
-
-        {/* VALUE PROPOSITIONS BAR */}
-        <section
-          className="border-y py-6 px-6"
-          style={{
-            borderColor: isDarkTemplate ? "#1E293B" : "#E4E9E5",
-            backgroundColor: isDarkTemplate ? "#090D16" : "#FFFFFF",
-          }}
-        >
-          <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center sm:text-left text-xs">
-            <div className="flex items-center justify-center sm:justify-start gap-3">
-              <Truck className="h-5 w-5 text-emerald-500 shrink-0" />
-              <div>
-                <p className="font-semibold">Complimentary Courier Delivery</p>
-                <p className="opacity-70">On all domestic retail orders</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center sm:justify-start gap-3">
-              <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
-              <div>
-                <p className="font-semibold">Verified Authenticity Guarantee</p>
-                <p className="opacity-70">Direct provenance from artisans</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center sm:justify-start gap-3">
-              <RotateCcw className="h-5 w-5 text-emerald-500 shrink-0" />
-              <div>
-                <p className="font-semibold">30-Day Effortless Returns</p>
-                <p className="opacity-70">Full satisfaction assurance</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* FEATURED PRODUCTS GRID */}
-        {enabledSections.includes("featured_products") && (
-          <section className="py-16 px-6 max-w-6xl mx-auto">
-            <div
-              className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-3 border-b pb-4"
-              style={{ borderColor: isDarkTemplate ? "#1E293B" : "#E4E9E5" }}
-            >
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wider opacity-70">
-                  Featured Demonstration Catalog
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1">
-                  Selected Pieces ({products.length})
-                </h2>
-              </div>
-              <span className="text-xs opacity-75 font-medium">
-                Live interactive pitch items
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((prod) => (
-                <div
-                  key={prod.id}
-                  className="rounded-xl border overflow-hidden flex flex-col justify-between group transition-all hover:shadow-lg"
-                  style={{
-                    backgroundColor: isDarkTemplate ? "#1E293B" : "#FFFFFF",
-                    borderColor: isDarkTemplate ? "#334155" : "#E4E9E5",
-                  }}
-                >
-                  <div
-                    className={cn(
-                      "h-48 flex items-center justify-center text-xl font-bold tracking-wider relative overflow-hidden transition-transform group-hover:scale-102",
-                      prod.thumbnailColor
-                    )}
-                  >
-                    <span>{prod.name.slice(0, 2).toUpperCase()}</span>
-                    <span className="absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 text-stone-800 shadow-2xs">
-                      {prod.category}
-                    </span>
-                  </div>
-
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
-                    <div>
-                      <h3 className="font-bold text-base line-clamp-1">{prod.name}</h3>
-                      <p className="text-xs opacity-70 mt-1 line-clamp-2 leading-relaxed">
-                        {prod.description}
-                      </p>
-                    </div>
-
-                    <div
-                      className="pt-3 border-t flex items-center justify-between"
-                      style={{ borderColor: isDarkTemplate ? "#334155" : "#F0F4F1" }}
-                    >
-                      <div>
-                        <span className="text-xs opacity-60">Price</span>
-                        <p className="text-base font-bold">
-                          ${prod.price.toFixed(2)}{" "}
-                          <span className="text-[10px] opacity-70 font-normal">{prod.currency}</span>
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-opacity hover:opacity-90"
-                        style={{ backgroundColor: branding.primaryColor }}
-                      >
-                        Quick Add
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* BRAND STORY / ABOUT */}
-        {enabledSections.includes("about") && (
-          <section
-            className="py-16 px-6 border-t"
-            style={{
-              borderColor: isDarkTemplate ? "#1E293B" : "#E4E9E5",
-              backgroundColor: isDarkTemplate ? "#0B1120" : "#FFFFFF",
-            }}
-          >
-            <div className="max-w-4xl mx-auto text-center space-y-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">
-                About {storeName}
-              </span>
-              <h2 className="text-3xl font-bold tracking-tight">
-                Designed for {initialStore.clientName}
-              </h2>
-              <p className="text-sm sm:text-base opacity-75 leading-relaxed max-w-2xl mx-auto">
-                {branding.aboutText ||
-                  initialStore.description ||
-                  `Every element of this demonstration has been tailored to reflect ${initialStore.clientName}'s distinctive brand heritage, modern e-commerce requirements, and audience expectations.`}
-              </p>
-            </div>
-          </section>
-        )}
-
-        {/* NEWSLETTER */}
-        {enabledSections.includes("newsletter") && (
-          <section className="py-16 px-6 max-w-xl mx-auto text-center space-y-4">
-            <h3 className="text-2xl font-bold tracking-tight">Stay in Touch</h3>
-            <p className="text-xs opacity-75">
-              Subscribe to receive exclusive collection updates and private showroom previews.
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                placeholder="Enter client email address"
-                className="w-full rounded-lg border px-3.5 py-2 text-xs bg-white text-stone-900 focus:outline-hidden"
-                style={{ borderColor: "#E4E9E5" }}
-              />
-              <button
-                type="button"
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-white whitespace-nowrap"
-                style={{ backgroundColor: branding.primaryColor }}
-              >
-                Subscribe
-              </button>
-            </div>
-          </section>
-        )}
+        {orderedSections
+          .filter((id) => id !== "footer")
+          .map((id) => renderSectionBlock(id))}
       </main>
 
       {/* FOOTER */}
-      {enabledSections.includes("footer") && (
+      {orderedSections.includes("footer") && enabledSections.includes("footer") && (
         <footer
           className="border-t py-8 px-6 text-xs opacity-75"
           style={{

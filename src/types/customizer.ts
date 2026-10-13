@@ -12,6 +12,7 @@ export interface PreviewUpdatePayload {
     ctaText?: string;
   };
   enabledSections?: string[];
+  orderedSections?: string[];
   selectedProductIds?: string[];
 }
 

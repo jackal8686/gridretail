@@ -5,6 +5,7 @@ import { FeedbackRepository } from "@/lib/repositories/feedback.repository";
 import { StoreRepository } from "@/lib/repositories/store.repository";
 import { ActivityRepository } from "@/lib/repositories/activity.repository";
 import { StoreFeedback, FeedbackType } from "@/types/feedback";
+import { NotificationService } from "@/lib/notifications/notification-service";
 
 export async function GET(
   _request: NextRequest,
@@ -83,7 +84,7 @@ export async function POST(
 
     const saved = await FeedbackRepository.create(feedbackRecord);
 
-    // Apply store review status transition
+    // Apply store review status transition & dispatch notifications
     if (feedbackType === "approval") {
       await StoreRepository.update(store.id, { status: "Approved" });
       await ActivityRepository.record({
@@ -94,6 +95,13 @@ export async function POST(
         targetId: store.id,
         targetName: store.name,
       });
+
+      // Dispatch approval notification email
+      try {
+        await NotificationService.notifyProposalApproved(store, cleanAuthor, message.trim());
+      } catch (notifErr) {
+        console.warn("Failed to dispatch approval notification:", notifErr);
+      }
     } else if (feedbackType === "changes_requested") {
       await StoreRepository.update(store.id, { status: "Changes Requested" });
       await ActivityRepository.record({
@@ -104,6 +112,13 @@ export async function POST(
         targetId: store.id,
         targetName: store.name,
       });
+
+      // Dispatch changes requested notification email
+      try {
+        await NotificationService.notifyChangesRequested(store, cleanAuthor, message.trim());
+      } catch (notifErr) {
+        console.warn("Failed to dispatch changes requested notification:", notifErr);
+      }
     } else {
       await ActivityRepository.record({
         type: "store_updated",
@@ -113,6 +128,13 @@ export async function POST(
         targetId: store.id,
         targetName: store.name,
       });
+
+      // Dispatch general feedback notification email
+      try {
+        await NotificationService.notifyFeedbackSubmitted(store, saved, cleanAuthor);
+      } catch (notifErr) {
+        console.warn("Failed to dispatch feedback notification:", notifErr);
+      }
     }
 
     return NextResponse.json({ feedback: saved }, { status: 201 });
