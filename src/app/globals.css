@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #176B4D;
+  --color-brand-primary-dark: #104D38;
+  --color-brand-primary-light: #E2F5E9;
+  --color-brand-bg: #FAF9F6;
+  --color-brand-surface: #FFFFFF;
+  --color-brand-text: #18231E;
+  --color-brand-muted: #66736C;
+  --color-brand-border: #E4E9E5;
+  --color-brand-border-subtle: #F0F4F1;
+  --color-brand-success: #16804A;
+  --color-brand-warning: #B7791F;
+  --color-brand-error: #C43D3D;
+  
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+:root {
+  --bg-primary: #FAF9F6;
+  --surface-card: #FFFFFF;
+  --text-main: #18231E;
+  --text-muted: #66736C;
+  --border-color: #E4E9E5;
+  --accent-green: #176B4D;
+  --accent-green-hover: #104D38;
+  --accent-green-light: #E2F5E9;
+}
+
+body {
+  background-color: #FAF9F6;
+  color: #18231E;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar styling for high-end SaaS feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D8DFDB;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #BCC7C1;
+}
+
+/* Subtle focus-visible ring defaults */
+:focus-visible {
+  outline: 2px solid #176B4D;
+  outline-offset: 2px;
+}
