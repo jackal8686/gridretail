@@ -4,3 +4,7 @@ export * from "./template";
 export * from "./product";
 export * from "./activity";
 export * from "./user";
+export * from "./customizer";
+export * from "./preview-share";
+export * from "./feedback";
+export * from "./media";

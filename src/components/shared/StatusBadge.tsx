@@ -10,6 +10,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ status, size = "md" }: StatusBadgeProps) {
   switch (status) {
     case "Published":
+    case "Approved":
     case "Active":
     case "In Stock":
       return (
@@ -28,6 +29,12 @@ export function StatusBadge({ status, size = "md" }: StatusBadgeProps) {
     case "Prospect":
       return (
         <Badge variant="warning" size={size} dot>
+          {status}
+        </Badge>
+      );
+    case "Changes Requested":
+      return (
+        <Badge variant="error" size={size} dot>
           {status}
         </Badge>
       );

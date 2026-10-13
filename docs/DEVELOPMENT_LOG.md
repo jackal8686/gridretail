@@ -208,3 +208,64 @@
   - `npm run test`: 34 passed, 0 failed.
   - `npm run build`: Successful compilation across all 19 static/dynamic routes.
 
+---
+
+## Phase 3: Visual Customizer, Client Sharing, Feedback Workflow & Cloud Media
+
+### Log Entry: 2026-10-13 (Phase 3 Implementation)
+**Author:** Senior Full-Stack Engineer / Software Architect  
+**Objective:** Deliver Visual Storefront Customizer, Secure Client Preview Links, Client Feedback & Approval Workflow, and Cloud Media Management.
+
+### Subphase A: Visual Storefront Customizer
+- Designed `src/types/customizer.ts` with explicit message contracts:
+  - `GRIDRETAIL_PREVIEW_INIT`, `GRIDRETAIL_PREVIEW_UPDATE`, `GRIDRETAIL_PREVIEW_READY`, `GRIDRETAIL_PREVIEW_ACK`.
+- Created client component `src/components/storefront/StorefrontView.tsx` with postMessage listeners, dynamic style updates, and iframe handshake.
+- Updated `src/app/store/[slug]/page.tsx` to wrap `StorefrontView`.
+- Refactored `/stores/[id]/preview/page.tsx` into an interactive 3-panel customizer:
+  - 4 configuration drawers: Branding, Content, Sections, Review.
+  - State dirty-checking and unsaved changes alert badge.
+  - Direct persistence via `PATCH /api/stores/[id]` with activity logging.
+- Created `tests/customizer.test.ts` verifying message contract validation and repository persistence.
+
+### Subphase B: Secure Client Preview Links
+- Implemented `src/lib/crypto/tokens.ts` with `generateSecureToken()`, `hashToken()`, and `timingSafeCompare()`.
+- Implemented `src/types/preview-share.ts` and `PreviewShareRepository` in `src/lib/repositories/preview-share.repository.ts`.
+- Created API routes:
+  - `POST /api/stores/[id]/shares`: Generates tokenized share, hashes token with SHA-256, returns raw token once.
+  - `GET /api/stores/[id]/shares`: Lists active and past shares for a store.
+  - `PATCH /api/stores/[id]/shares/[shareId]`: Immediate revocation of preview shares.
+- Implemented public route `src/app/preview/[token]/page.tsx`:
+  - Token hash verification, expiration check, and revocation verification.
+  - Isolated from `AppShell` and authenticated middleware.
+- Built `ShareModal` in `src/components/shared/ShareModal.tsx` and integrated it into the customizer.
+- Created `tests/preview-share.test.ts` verifying secure generation, hashing, expiration, and revocation.
+
+### Subphase C: Client Feedback and Approval Workflow
+- Extended `StoreStatus` enum with `"Approved"` and `"Changes Requested"`.
+- Updated `StatusBadge` in `src/components/shared/StatusBadge.tsx` to style approved and changes requested states.
+- Implemented `src/types/feedback.ts` and `FeedbackRepository` in `src/lib/repositories/feedback.repository.ts`.
+- Created APIs:
+  - `POST /api/preview/[token]/feedback`: Public client feedback submission with automated store status transition.
+  - `GET /api/preview/[token]/feedback`: Public feedback list for active token.
+  - `POST /api/stores/[id]/feedback`: Authenticated team response endpoint.
+  - `GET /api/stores/[id]/feedback`: Authenticated store feedback stream.
+- Built `ClientFeedbackDrawer` in `src/components/shared/ClientFeedbackDrawer.tsx` with submission form, action pill switches, and conversation stream.
+- Integrated Review/Feedback tab in customizer drawer.
+- Created `tests/feedback.test.ts` verifying store scoping, state transitions, and comment persistence.
+
+### Subphase D: Cloud Media Management
+- Defined `src/types/media.ts` with `MediaAsset` and `StorageProvider` contracts.
+- Implemented `src/lib/storage/provider.ts` with `LocalStorageProvider` and `S3StorageProvider`.
+- Implemented `src/lib/repositories/media-asset.repository.ts` for asset metadata persistence.
+- Created API `src/app/api/stores/[id]/media/route.ts` with MIME validation, 5MB file size limits, and store branding attachment.
+- Added direct file upload controls for logos and banners in the visual customizer drawer.
+- Created `tests/media.test.ts` verifying upload, storage key generation, and asset repository CRUD.
+
+### Subphase E: Quality Assurance, Automated Testing & Build Validation
+- Test suite expanded to 42 automated tests across 8 suites:
+  - `npm run lint`: 0 errors, 0 warnings.
+  - `npm run type-check`: 0 errors.
+  - `npm run test`: 42 passed, 0 failed.
+  - `npm run build`: Successful compilation across all 19 static/dynamic routes.
+
+

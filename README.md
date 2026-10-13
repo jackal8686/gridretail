@@ -1,4 +1,4 @@
-# GridRetail — Phase 2: Database Foundation, Authentication, Store Generation Wizard & Live Storefront Preview
+# GridRetail — Phase 3: Visual Customizer, Client Sharing, Feedback Workflow & Cloud Media
 
 > **Internal E-Commerce Demo Generation Platform**  
 > Enables account teams and retail solution architects to configure tailored, high-converting demo storefronts for prospective clients within minutes.
@@ -9,19 +9,26 @@
 
 GridRetail is an enterprise platform developed to streamline retail client pitches. Rather than relying on generic slide decks or static screenshots, GridRetail generates interactive, industry-tailored demo storefronts featuring customized product catalogs, branded themes, and responsive layouts.
 
-### Phase 2 Capabilities Completed:
-- **MongoDB Database Foundation:** Native MongoDB driver integration (`mongodb@7.x`) with connection pooling, cached client promises, indexes, and automatic fallback for offline development.
-- **Role-Based Authentication (Auth.js / NextAuth v5):** Corporate credentials authentication with bcrypt-hashed passwords, JWT sessions (8h maxAge), Next.js Middleware route guarding, and RBAC (`admin` vs `employee`).
-- **Team & Security Administration:** Admin user management API (`/api/admin/users`) with account creation, disabling/reactivation, and interactive UI in Settings.
-- **5-Step Store Generation Wizard (`/stores/new`):**
-  1. *Client & Store Details:* Client selection, inline quick-client creation, industry selection, store name, and auto-generated slug with real-time uniqueness validation.
-  2. *Template Selection:* 8 architectural templates with industry recommendations, tag filters, and color palette inspection.
-  3. *Branding & Storefront Sections:* Hex color pickers, typography pairing, value proposition toggles, and layout section management (hero, featured products, about, newsletter, footer).
-  4. *Catalog Selection:* Searchable, category-filtered product picker with multi-SKU selection and count metrics.
-  5. *Review & Deploy:* Comprehensive configuration summary and one-click store deployment with immediate redirection to the live preview.
-- **Dynamic Storefront Renderer (`/store/[slug]`):** Public, standalone storefront rendering engine with theme colors, typography classes, dynamic layout sections, value propositions, and responsive product catalog grids.
-- **Responsive Preview Suite (`/stores/[id]/preview`):** Device-mode switcher (Desktop, Tablet 768px, Mobile 375px), iframe sandbox, quick refresh, and direct pop-out link.
-- **Complete Test Automation:** 34 automated unit/integration tests (`tests/db.test.ts`, `tests/auth.test.ts`, `tests/wizard.test.ts`, `tests/storefront.test.ts`) covering all core subsystems.
+### Phase 3 Capabilities Completed:
+- **Visual Storefront Customizer (`/stores/[id]/preview`):**
+  - Integrated 3-panel professional customizer interface (Branding, Content, Sections, Review).
+  - Bidirectional, origin-validated `postMessage` protocol syncing edits directly into the live preview iframe without page reload.
+  - Server-side persistence via `PATCH /api/stores/[id]` with unsaved change detection, saving states, and rollback protection.
+- **Secure Tokenized Client Preview Sharing (`/preview/[token]`):**
+  - Bearer links generated using cryptographically secure random tokens (SHA-256 hash storage).
+  - Configurable expiration periods (24h, 3 days, 7 days, 14 days) and immediate revocation controls via `PATCH /api/stores/[id]/shares/[shareId]`.
+  - Public preview access strictly scoped to the designated storefront without requiring a GridRetail user login.
+  - Hardened security headers, access counters, and clean unavailable/expired link screens.
+- **Client Feedback & Approval Workflow:**
+  - Public floating review drawer (`ClientFeedbackDrawer`) on tokenized client previews.
+  - Formal proposal sign-off transitions (`Approved` / `Changes Requested`) with audit logging.
+  - Real-time conversation threads between clients and internal account architects.
+- **Cloud Media Management:**
+  - Multi-provider storage abstraction (`LocalStorageProvider` + `S3StorageProvider`).
+  - Integrated logo and hero banner upload controls with MIME type verification (PNG, JPG, WEBP, SVG) and 5MB size limits.
+  - Immediate attachment to storefront branding documents and live canvas synchronization.
+- **Comprehensive Automated Test Suite:**
+  - 42 automated tests running via Node.js native test runner (`tsx --test tests/**/*.test.ts`).
 
 ---
 
@@ -32,6 +39,7 @@ GridRetail is an enterprise platform developed to streamline retail client pitch
 - **Styling:** Tailwind CSS v4 with custom design tokens in `@theme` and `src/config/theme.ts`
 - **Database:** MongoDB 7.x (Native driver, connection pooling, graceful in-memory fallback)
 - **Authentication:** Auth.js (`next-auth@5.0.0-beta.32`) with `bcryptjs` credential hashing & JWT sessions
+- **Storage:** Pluggable storage provider (Local file staging & S3/R2 compatible adapter)
 - **Iconography:** Lucide React (`lucide-react`)
 - **Fonts:** Geist Sans & Geist Mono via `next/font`
 - **Test Runner:** Node.js native test runner via `tsx`
@@ -42,7 +50,7 @@ GridRetail is an enterprise platform developed to streamline retail client pitch
 
 ```text
 gridretail/
-├── public/                     # Static assets and icons
+├── public/                     # Static assets, icons, and uploaded media
 ├── src/
 │   ├── app/                    # Next.js App Router routes
 │   │   ├── layout.tsx          # Root layout with SessionWrapper & AppShell
@@ -52,41 +60,42 @@ gridretail/
 │   │   ├── stores/             # Store management & creation
 │   │   │   ├── page.tsx        # Stores list table with search & filters
 │   │   │   ├── new/page.tsx    # 5-step store generation wizard
-│   │   │   └── [id]/preview/   # Responsive iframe preview suite
+│   │   │   └── [id]/preview/   # Visual storefront customizer suite
+│   │   ├── preview/[token]/    # Tokenized public client preview & review drawer
 │   │   ├── store/[slug]/       # Standalone generated storefront renderer
 │   │   ├── clients/page.tsx    # Client accounts directory
 │   │   ├── templates/page.tsx  # 8-template architectural showcase
 │   │   ├── products/page.tsx   # Demo product catalog
 │   │   ├── settings/page.tsx   # Platform settings & Team/Security management
-│   │   └── api/                # REST API Route Handlers
+│   │   └── api/                # Secure REST API endpoints
 │   │       ├── auth/           # Auth.js route handler
 │   │       ├── health/         # MongoDB health check endpoint
 │   │       ├── admin/users/    # Admin user management endpoint
-│   │       ├── stores/         # Stores list, create & detail endpoints
+│   │       ├── stores/         # Stores list, create, detail, shares & media
+│   │       ├── preview/        # Public token feedback API
 │   │       ├── clients/        # Clients list & creation endpoints
 │   │       ├── templates/      # Templates list endpoint
 │   │       └── products/       # Products list endpoint
 │   ├── components/
 │   │   ├── layout/             # AppSidebar, AppHeader, AppShell, PageHeader
 │   │   ├── dashboard/          # MetricCards, RecentStoresTable, QuickActions, ActivityFeed
+│   │   ├── storefront/         # StorefrontView (postMessage live-sync renderer)
 │   │   ├── ui/                 # Button, Card, Badge, SearchInput, FilterSelect, Modal, EmptyState
-│   │   └── shared/             # StatusBadge, DemoBanner, SessionWrapper
-│   ├── config/
-│   │   ├── theme.ts            # Centralized design tokens (colors, shadows, typography)
-│   │   └── site.ts             # Site metadata and platform constants
-│   ├── constants/
-│   │   └── navigation.ts       # Navigation links, icons, and route definitions
+│   │   └── shared/             # StatusBadge, ShareModal, ClientFeedbackDrawer, SessionWrapper
 │   ├── lib/
-│   │   ├── db/                 # mongodb connection pool, seed & bootstrap scripts
-│   │   ├── repositories/       # Store, Client, Template, Product, User, Activity repositories
-│   │   └── validation/         # Zod/custom validators for slug, store, and user
-│   ├── types/                  # TypeScript domain interfaces (Store, Client, User, etc.)
-│   ├── auth.ts                 # Auth.js NextAuth configuration
-│   └── middleware.ts           # Next.js route protection & session verification
-├── tests/                      # Automated test suite (db, auth, wizard, storefront)
+│   │   ├── crypto/             # Secure random tokens & SHA-256 hashing
+│   │   ├── db/                 # MongoDB connection pool, seed & bootstrap scripts
+│   │   ├── repositories/       # Domain repositories (Store, Client, Share, Feedback, Media, etc.)
+│   │   ├── storage/            # Pluggable Storage Provider (Local & S3)
+│   │   └── validation/         # Validation schemas for store, slug, and user
+│   ├── types/                  # TypeScript domain contracts
+│   ├── auth.ts                 # Auth.js configuration & credentials provider
+│   └── middleware.ts           # Route protection middleware
+├── tests/                      # Automated test suite (db, auth, wizard, storefront, customizer, shares, feedback, media)
 ├── docs/
 │   ├── PHASE_1_AUDIT.md        # Phase 1 architectural & UI audit
-│   ├── PHASE_2_AUDIT.md        # Comprehensive Phase 2 implementation audit
+│   ├── PHASE_2_AUDIT.md        # Phase 2 implementation audit
+│   ├── PHASE_3_AUDIT.md        # Comprehensive Phase 3 implementation audit
 │   ├── ARCHITECTURE.md         # Full architecture blueprint & data flow
 │   └── DEVELOPMENT_LOG.md      # Detailed engineering changelog
 ├── .env.example                # Environment variables template
@@ -114,14 +123,10 @@ gridretail/
    ```bash
    cp .env.example .env.local
    ```
-   *(Ensure `AUTH_SECRET` is set. If connecting to a local MongoDB, configure `MONGODB_URI`)*.
 
 3. **Database Setup (Optional if using MongoDB):**
    ```bash
-   # Seed demonstration catalogs, clients, and templates
    npm run seed
-
-   # Provision initial administrator account
    npm run bootstrap-admin
    ```
 
@@ -134,7 +139,6 @@ gridretail/
 5. **Sign In Credentials:**
    - **Administrator:** `admin@gridretail.internal` / `AdminGrid2026!`
    - **Employee:** `sarah.chen@gridretail.internal` / `AdminGrid2026!`
-   *(Quick-fill buttons are available on the login page for development convenience)*.
 
 ---
 
@@ -149,7 +153,7 @@ npm run lint
 # Execute TypeScript type-checking
 npm run type-check
 
-# Execute automated test suite (34 tests)
+# Execute automated test suite (42 tests)
 npm run test
 
 # Execute production build

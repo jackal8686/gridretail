@@ -2,6 +2,8 @@ export type StoreStatus =
   | "Draft" 
   | "In Progress" 
   | "Pending Review" 
+  | "Approved"
+  | "Changes Requested"
   | "Published" 
   | "Archived";
 
@@ -23,6 +25,8 @@ export interface StoreBranding {
   bannerUrl?: string;
   heroHeadline?: string;
   heroSubheadline?: string;
+  aboutText?: string;
+  ctaText?: string;
 }
 
 export interface Store {

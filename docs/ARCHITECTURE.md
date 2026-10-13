@@ -4,139 +4,100 @@
 
 GridRetail is an internal SaaS platform designed to accelerate sales cycles by generating customized, high-fidelity e-commerce demo storefronts for prospective clients within minutes.
 
-Instead of manual design mockups, platform operators follow an intuitive wizard:
-1. Choose a client or create a new prospect record.
-2. Choose an industry-specific storefront template.
-3. Configure branding (color palette, typography, value propositions).
-4. Select sample products from the catalog.
-5. Review configuration and deploy the generated storefront.
-6. Preview the resulting storefront in a live, responsive sandbox.
+Instead of manual design mockups, platform operators follow an intuitive workflow:
+1. Provision client stores using an intuitive 5-step wizard.
+2. Fine-tune aesthetics and layout in real-time using the **Visual Storefront Customizer**.
+3. Generate secure, tokenized **Client Preview Links** with configurable expiration.
+4. Share links with prospective clients who review, submit comments, and approve proposals directly via a floating client review panel.
+5. Upload bespoke logos and hero banners through a unified **Cloud Media Management** pipeline.
 
 ---
 
-## 2. Phase 2 Architecture Overview
-
-Phase 2 transforms the Phase 1 UI shell into a full-stack, database-backed platform with robust authentication, role-based access control, persistent store generation, and a live rendering engine.
+## 2. Phase 3 Architecture & Data Flow
 
 ```mermaid
 flowchart TD
     subgraph ClientLayer [Presentation Layer]
-        UI[App Router UI]
-        Wizard["/stores/new Wizard"]
-        Preview["/stores/[id]/preview Sandbox"]
-        PublicStore["/store/[slug] Generated Storefront"]
+        Customizer["/stores/[id]/preview (Visual Customizer)"]
+        PublicPreview["/preview/[token] (Public Client Preview)"]
+        PublicStore["/store/[slug] (Rendered Storefront)"]
     end
 
-    subgraph SecurityLayer [Security & Session Layer]
+    subgraph SecurityLayer [Security & Route Guard]
         MW[Next.js Middleware]
-        AuthJS[Auth.js v5 / Credentials]
-        RBAC[RBAC Guard: admin vs employee]
+        AuthJS[Auth.js v5 RBAC]
+        TokenVerifier[Crypto Token Verifier (SHA-256)]
     end
 
-    subgraph ApiLayer [API Route Handlers]
-        AuthAPI["/api/auth/*"]
-        StoresAPI["/api/stores/*"]
-        AdminAPI["/api/admin/users"]
-        CatalogAPI["/api/clients, /api/templates, /api/products"]
+    subgraph MessagingLayer [Live Sync Layer]
+        PostMessage[Bidirectional Origin-Validated postMessage]
     end
 
-    subgraph DataLayer [Repository & Database Layer]
-        Repo[Domain Repositories]
-        Pool[MongoDB Connection Pool]
-        MemFallback[In-Memory Mock Fallback]
-        Mongo[(MongoDB Database)]
+    subgraph StorageLayer [Media Storage]
+        StorageAdapter[Storage Provider Abstraction]
+        LocalDisk[Local Public Uploads]
+        S3Cloud[S3 / R2 Object Storage]
     end
 
-    UI --> MW
-    MW --> AuthJS
-    Wizard --> StoresAPI
-    StoresAPI --> Repo
-    AdminAPI --> RBAC
-    RBAC --> Repo
-    Preview --> PublicStore
-    PublicStore --> Repo
-    Repo --> Pool
-    Pool -->|Connected| Mongo
-    Pool -->|Offline/Dev| MemFallback
-```
+    subgraph ApiLayer [API Layer]
+        StoresAPI["/api/stores/[id] (PATCH config)"]
+        SharesAPI["/api/stores/[id]/shares (POST/PATCH token shares)"]
+        FeedbackAPI["/api/preview/[token]/feedback (Client review)"]
+        MediaAPI["/api/stores/[id]/media (Asset uploads)"]
+    end
 
-### Key Architectural Pillars:
+    subgraph RepositoryLayer [Domain Repositories]
+        StoreRepo[StoreRepository]
+        ShareRepo[PreviewShareRepository]
+        FeedbackRepo[FeedbackRepository]
+        MediaRepo[MediaAssetRepository]
+        UserRepo[UserRepository]
+    end
 
-1. **Decoupled Presentation Layer:**
-   - Next.js App Router with React Server and Client Components.
-   - Reusable UI primitives (`Button`, `Card`, `Badge`, `SearchInput`, `FilterSelect`, `Modal`, `EmptyState`) located in `@/components/ui`.
-   - Domain-specific presentation components (`MetricCards`, `RecentStoresTable`, `QuickActions`, `RecentActivityFeed`) located in `@/components/dashboard`.
-   - Dedicated wizard flow (`/stores/new`) isolated across 5 progressive stages.
-   - Dedicated storefront rendering sandbox (`/store/[slug]`) isolated from the administrative `AppShell`.
-
-2. **Database & Persistence Layer:**
-   - Native MongoDB driver (`mongodb@7.x`) with global client promise caching across Next.js App Router hot reloads.
-   - Repository Pattern (`StoreRepository`, `ClientRepository`, `TemplateRepository`, `ProductRepository`, `UserRepository`, `ActivityRepository`) abstracting MongoDB queries.
-   - Graceful in-memory fallback enabled whenever `MONGODB_URI` is unconfigured, ensuring test suites and local sandboxes run without crashing.
-   - Unique indexes enforcing integrity on `stores.slug`, `stores.id`, `users.email`, `templates.id`, `clients.id`, and `products.id`.
-
-3. **Authentication & Role-Based Access Control:**
-   - Auth.js (`next-auth@5.0.0-beta.32`) utilizing Credentials Provider with `bcryptjs` password verification (minimum cost factor 10).
-   - JWT sessions with 8-hour expiration (`maxAge: 28800`).
-   - Server-side role validation distinguishing `admin` (full permissions + user provisioning) and `employee` (store creation and storefront operations).
-   - Edge-compatible Next.js Middleware guarding `/dashboard`, `/stores`, `/clients`, `/templates`, `/products`, and `/settings`.
-   - Public routing allowed for `/login`, `/store/*`, `/api/auth/*`, and `/api/health`.
-
-4. **Store Generation Pipeline:**
-   - Slug normalization utility converting raw store names to lowercase URL-safe slugs with hyphens and reserved keyword protection (`admin`, `api`, `dashboard`, `login`, `store`, `settings`).
-   - Store input validation ensuring mandatory fields, valid hex colors, and non-empty product lists.
-   - One-click creation storing complete configuration documents in MongoDB and automatically incrementing client demo counts.
-
-5. **Storefront Rendering & Device Preview Sandbox:**
-   - Public route `/store/[slug]` dynamically resolves the store by slug and queries the associated product catalog.
-   - Custom branding styling dynamically applied via CSS variables (`--store-primary`, `--store-secondary`) and Google Fonts.
-   - Modular storefront sections rendered dynamically (Hero banner, Value propositions, Featured catalog grid, About section, Newsletter subscription, Footer).
-   - `/stores/[id]/preview` provides an interactive iframe sandbox with responsive viewport controls (Desktop, Tablet 768px, Mobile 375px), refresh triggers, and pop-out preview capabilities.
-
----
-
-## 3. Directory Layout & Module Boundaries
-
-```text
-src/
-├── app/                  # Routing & Page Views
-│   ├── layout.tsx        # Global shell with SessionWrapper
-│   ├── page.tsx          # Root redirect to /dashboard
-│   ├── globals.css       # Design tokens & baseline CSS
-│   ├── login/            # Dedicated sign-in page with Suspense wrapper
-│   ├── dashboard/        # Executive overview & KPIs
-│   ├── stores/           # Store management & creation
-│   │   ├── page.tsx      # Stores table with search & filters
-│   │   ├── new/          # 5-step store generation wizard
-│   │   └── [id]/preview/ # Responsive iframe preview suite
-│   ├── store/[slug]/     # Standalone generated storefront renderer
-│   ├── clients/          # Client CRM overview & contacts
-│   ├── templates/        # 8-template architectural showcase
-│   ├── products/         # Product catalog management
-│   ├── settings/         # Tabbed workspace preferences & Team security
-│   └── api/              # Secure REST API endpoints
-├── components/
-│   ├── layout/           # AppShell, AppSidebar, AppHeader, PageHeader
-│   ├── dashboard/        # Dashboard-specific widgets & tables
-│   ├── ui/               # Low-level reusable UI primitives
-│   └── shared/           # Cross-cutting widgets (StatusBadge, SessionWrapper)
-├── config/               # Site configuration & design tokens
-├── constants/            # Navigation structure & route metadata
-├── lib/
-│   ├── db/               # mongodb connection pool, seed & bootstrap scripts
-│   ├── repositories/     # Domain repositories with MongoDB & fallback logic
-│   └── validation/       # Validation schemas for store, slug, and user
-├── types/                # TypeScript interface contracts
-├── auth.ts               # Auth.js configuration & credentials provider
-└── middleware.ts         # Route protection middleware
+    Customizer <-->|postMessage Live Update| PublicStore
+    Customizer --> StoresAPI
+    Customizer --> SharesAPI
+    Customizer --> MediaAPI
+    PublicPreview --> TokenVerifier
+    TokenVerifier --> ShareRepo
+    PublicPreview --> FeedbackAPI
+    FeedbackAPI --> FeedbackRepo
+    FeedbackAPI --> StoreRepo
+    MediaAPI --> StorageAdapter
+    StorageAdapter --> LocalDisk
+    StorageAdapter --> S3Cloud
+    StoresAPI --> StoreRepo
+    SharesAPI --> ShareRepo
 ```
 
 ---
 
-## 4. Security & Compliance Guardrails
+## 3. Core Architectural Subsystems
 
-1. **Credential Safety:** Passwords hashed with `bcryptjs` (salt rounds 10). Passwords are never stored in plain text and are stripped before returning user entities to the client (`SafeUser`).
-2. **Server-Side Authorization:** Admin-only routes (`/api/admin/users`) strictly verify `session.user.role === "admin"` on the server before mutating user records.
-3. **Disabled Account Invalidation:** If an administrator disables an employee account, the credentials provider blocks login immediately with `ACCOUNT_DISABLED`.
-4. **Input Sanitization:** Slugs and store attributes are sanitized against XSS and injection patterns. Slugs cannot collide with reserved routing pathways.
-5. **Session Isolation:** Storefront previews render in an iframe sandbox (`sandbox="allow-scripts allow-same-origin"`) without inheriting administrative session tokens.
+### A. Visual Storefront Customizer & postMessage Pipeline
+- **Drawer Controls:** The customizer hosts 4 dedicated tabs: Branding (accent colors, typography, logos, banners), Content (hero copy, CTA destination, brand story), Sections (modular layout toggles), and Review (client feedback conversation).
+- **Communication Protocol:**
+  - `GRIDRETAIL_PREVIEW_READY`: Handshake broadcast by the iframe on load.
+  - `GRIDRETAIL_PREVIEW_UPDATE`: Payload sent by the customizer upon state mutation.
+  - `GRIDRETAIL_PREVIEW_ACK`: Receipt acknowledgment sent by the iframe with timestamp.
+  - Origin verification (`event.origin === window.location.origin`) strictly enforces that third-party windows cannot spoof preview updates.
+- **Persistence:** Save operations commit changes via `PATCH /api/stores/[id]` with activity logging and unsaved-changes indicators.
+
+### B. Secure Tokenized Client Preview Sharing
+- **Bearer Tokens:** 32-byte cryptographically secure random tokens generated with `crypto.randomBytes()`.
+- **Zero Raw Token Storage:** Only the SHA-256 hash (`crypto.createHash("sha256")`) is stored in the database.
+- **Server-Side Validation:** The `/preview/[token]` route resolves the share record by token hash, validating that `status === "active"` and `Date.now() < expiresAt`.
+- **Immediate Revocation:** Operators can revoke links instantaneously via `PATCH /api/stores/[id]/shares/[shareId]`.
+
+### C. Client Feedback & Approval Workflow
+- **Review Panel:** The public preview includes a non-intrusive floating drawer (`ClientFeedbackDrawer`) allowing clients to submit general feedback, request modifications, or grant formal proposal approval.
+- **State Machine Transitions:**
+  - `Draft` → `Pending Review` (on share creation)
+  - `Pending Review` → `Approved` (on client approval)
+  - `Pending Review` → `Changes Requested` (on client revision request)
+- **Store Scoping:** Feedback is strictly bound to `storeId` and `shareId`.
+
+### D. Cloud Media Management
+- **Pluggable Storage Abstraction:** `StorageProvider` interface implemented by `LocalStorageProvider` (dev fallback) and `S3StorageProvider` (production S3/R2).
+- **Validation:** Strict MIME validation (PNG, JPG, WEBP, SVG) and 5MB size limit.
+- **Asset Attachment:** Uploads via `POST /api/stores/[id]/media` automatically link generated URLs to the store's branding document and notify the customizer.

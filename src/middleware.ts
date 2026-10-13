@@ -10,7 +10,9 @@ export default auth((req) => {
     pathname === "/login" ||
     pathname.startsWith("/api/auth") ||
     pathname === "/api/health" ||
+    pathname.startsWith("/api/preview/") || // Public tokenized preview feedback APIs
     pathname.startsWith("/store/") || // Storefronts rendered for preview
+    pathname.startsWith("/preview/") || // Secure tokenized client previews
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico") ||
     pathname.startsWith("/public");

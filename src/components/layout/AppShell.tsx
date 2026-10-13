@@ -15,7 +15,10 @@ export function AppShell({ children }: AppShellProps) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // If on login screen or rendered standalone storefront preview, render cleanly without dashboard shell
-  const isStandalone = pathname === "/login" || pathname.startsWith("/store/");
+  const isStandalone =
+    pathname === "/login" ||
+    pathname.startsWith("/store/") ||
+    pathname.startsWith("/preview/");
 
   if (isStandalone) {
     return <>{children}</>;
