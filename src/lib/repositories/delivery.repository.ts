@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db/mongodb";
+import { getDb, isFallbackAllowed, DatabaseUnavailableError } from "@/lib/db/mongodb";
 import { DeliveryRecord } from "@/types/delivery";
 
 let memoryDeliveries: DeliveryRecord[] = [];
@@ -6,10 +6,16 @@ let memoryDeliveries: DeliveryRecord[] = [];
 export const DeliveryRepository = {
   async create(record: DeliveryRecord): Promise<DeliveryRecord> {
     const db = await getDb();
+    if (!db && !isFallbackAllowed()) {
+      throw new DatabaseUnavailableError("Cannot create delivery record: database is unavailable in production.");
+    }
     if (db) {
       try {
         await db.collection<DeliveryRecord>("deliveries").insertOne({ ...record });
       } catch (err) {
+        if (!isFallbackAllowed()) {
+          throw err;
+        }
         console.warn("MongoDB insert error in DeliveryRepository.create:", err);
       }
     }
@@ -54,10 +60,16 @@ export const DeliveryRepository = {
 
   async update(id: string, updates: Partial<DeliveryRecord>): Promise<DeliveryRecord | null> {
     const db = await getDb();
+    if (!db && !isFallbackAllowed()) {
+      throw new DatabaseUnavailableError("Cannot update delivery record: database is unavailable in production.");
+    }
     if (db) {
       try {
         await db.collection<DeliveryRecord>("deliveries").updateOne({ id }, { $set: updates });
       } catch (err) {
+        if (!isFallbackAllowed()) {
+          throw err;
+        }
         console.warn("MongoDB update error in DeliveryRepository.update:", err);
       }
     }

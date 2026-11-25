@@ -1,0 +1,200 @@
+[
+  {
+    "storeId": "str_01",
+    "storeSlug": "aura-minimalist",
+    "websiteType": "E-commerce",
+    "viewport": "Desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 900
+    },
+    "noHorizontalOverflow": true,
+    "navigationFunctional": true,
+    "heroRendered": true,
+    "gridAdapted": true,
+    "imagesSized": true,
+    "ctasAccessible": true,
+    "formsUsable": true,
+    "noOverlappingContent": true,
+    "screenshotFile": "ecommerce-desktop.png",
+    "screenshotSize": 143267,
+    "status": "PASS",
+    "notes": "Storefront rendered cleanly at 1440x900 with no layout overflow."
+  },
+  {
+    "storeId": "str_01",
+    "storeSlug": "aura-minimalist",
+    "websiteType": "E-commerce",
+    "viewport": "Tablet",
+    "dimensions": {
+      "width": 768,
+      "height": 1024
+    },
+    "noHorizontalOverflow": true,
+    "navigationFunctional": true,
+    "heroRendered": true,
+    "gridAdapted": true,
+    "imagesSized": true,
+    "ctasAccessible": true,
+    "formsUsable": true,
+    "noOverlappingContent": true,
+    "screenshotFile": "ecommerce-tablet.png",
+    "screenshotSize": 141377,
+    "status": "PASS",
+    "notes": "Storefront rendered cleanly at 768x1024 with no layout overflow."
+  },
+  {
+    "storeId": "str_01",
+    "storeSlug": "aura-minimalist",
+    "websiteType": "E-commerce",
+    "viewport": "Mobile",
+    "dimensions": {
+      "width": 375,
+      "height": 812
+    },
+    "noHorizontalOverflow": true,
+    "navigationFunctional": true,
+    "heroRendered": true,
+    "gridAdapted": true,
+    "imagesSized": true,
+    "ctasAccessible": true,
+    "formsUsable": true,
+    "noOverlappingContent": true,
+    "screenshotFile": "ecommerce-mobile.png",
+    "screenshotSize": 69371,
+    "status": "PASS",
+    "notes": "Storefront rendered cleanly at 375x812 with no layout overflow."
+  },
+  {
+    "storeId": "str_07",
+    "storeSlug": "summit-legal",
+    "websiteType": "Appointment Scheduling",
+    "viewport": "Desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 900
+    },
+    "noHorizontalOverflow": true,
+    "navigationFunctional": true,
+    "heroRendered": true,
+    "gridAdapted": true,
+    "imagesSized": true,
+    "ctasAccessible": true,
+    "formsUsable": true,
+    "noOverlappingContent": true,
+    "screenshotFile": "appointments-desktop.png",
+    "screenshotSize": 67577,
+    "status": "PASS",
+    "notes": "Storefront rendered cleanly at 1440x900 with no layout overflow."
+  },
+  {
+    "storeId": "str_07",
+    "storeSlug": "summit-legal",
+    "websiteType": "Appointment Scheduling",
+    "viewport": "Tablet",
+    "dimensions": {
+      "width": 768,
+      "height": 1024
+    },
+    "noHorizontalOverflow": true,
+    "navigationFunctional": true,
+    "heroRendered": true,
+    "gridAdapted": true,
+    "imagesSized": true,
+    "ctasAccessible": true,
+    "formsUsable": true,
+    "noOverlappingContent": true,
+    "screenshotFile": "appointments-tablet.png",
+    "screenshotSize": 70297,
+    "status": "PASS",
+    "notes": "Storefront rendered cleanly at 768x1024 with no layout overflow."
+  },
+  {
+    "storeId": "str_07",
+    "storeSlug": "summit-legal",
+    "websiteType": "Appointment Scheduling",
+    "viewport": "Mobile",
+    "dimensions": {
+      "width": 375,
+      "height": 812
+    },
+    "noHorizontalOverflow": true,
+    "navigationFunctional": true,
+    "heroRendered": true,
+    "gridAdapted": true,
+    "imagesSized": true,
+    "ctasAccessible": true,
+    "formsUsable": true,
+    "noOverlappingContent": true,
+    "screenshotFile": "appointments-mobile.png",
+    "screenshotSize": 36067,
+    "status": "PASS",
+    "notes": "Storefront rendered cleanly at 375x812 with no layout overflow."
+  },
+  {
+    "storeId": "str_08",
+    "storeSlug": "apex-growth",
+    "websiteType": "Lead Generation",
+    "viewport": "Desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 900
+    },
+    "noHorizontalOverflow": true,
+    "navigationFunctional": true,
+    "heroRendered": true,
+    "gridAdapted": true,
+    "imagesSized": true,
+    "ctasAccessible": true,
+    "formsUsable": true,
+    "noOverlappingContent": true,
+    "screenshotFile": "leadgen-desktop.png",
+    "screenshotSize": 152869,
+    "status": "PASS",
+    "notes": "Storefront rendered cleanly at 1440x900 with no layout overflow."
+  },
+  {
+    "storeId": "str_08",
+    "storeSlug": "apex-growth",
+    "websiteType": "Lead Generation",
+    "viewport": "Tablet",
+    "dimensions": {
+      "width": 768,
+      "height": 1024
+    },
+    "noHorizontalOverflow": true,
+    "navigationFunctional": true,
+    "heroRendered": true,
+    "gridAdapted": true,
+    "imagesSized": true,
+    "ctasAccessible": true,
+    "formsUsable": true,
+    "noOverlappingContent": true,
+    "screenshotFile": "leadgen-tablet.png",
+    "screenshotSize": 159853,
+    "status": "PASS",
+    "notes": "Storefront rendered cleanly at 768x1024 with no layout overflow."
+  },
+  {
+    "storeId": "str_08",
+    "storeSlug": "apex-growth",
+    "websiteType": "Lead Generation",
+    "viewport": "Mobile",
+    "dimensions": {
+      "width": 375,
+      "height": 812
+    },
+    "noHorizontalOverflow": true,
+    "navigationFunctional": true,
+    "heroRendered": true,
+    "gridAdapted": true,
+    "imagesSized": true,
+    "ctasAccessible": true,
+    "formsUsable": true,
+    "noOverlappingContent": true,
+    "screenshotFile": "leadgen-mobile.png",
+    "screenshotSize": 76217,
+    "status": "PASS",
+    "notes": "Storefront rendered cleanly at 375x812 with no layout overflow."
+  }
+]

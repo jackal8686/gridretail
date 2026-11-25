@@ -5,6 +5,15 @@ import { ActivityRepository } from "@/lib/repositories/activity.repository";
 import { StoreRepository } from "@/lib/repositories/store.repository";
 import { StoreFeedback } from "@/types/feedback";
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -51,7 +60,7 @@ export async function POST(
       authorName: operatorName,
       authorEmail: session.user.email || undefined,
       type: "general",
-      message: message.trim(),
+      message: escapeHtml(message.trim()),
       createdAt: new Date().toISOString(),
     };
 

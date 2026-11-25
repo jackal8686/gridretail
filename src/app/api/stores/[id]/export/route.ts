@@ -6,6 +6,7 @@ import { TemplateRepository } from "@/lib/repositories/template.repository";
 import { ProductRepository } from "@/lib/repositories/product.repository";
 import { DeliveryRepository } from "@/lib/repositories/delivery.repository";
 import { ActivityRepository } from "@/lib/repositories/activity.repository";
+import { AnalyticsRepository } from "@/lib/repositories/analytics.repository";
 import { ExportService } from "@/lib/export/export-service";
 import { DeliveryMode, DeliveryRecord } from "@/types/delivery";
 
@@ -84,6 +85,23 @@ export async function POST(
       },
       targetId: store.id,
       targetName: store.name,
+    });
+
+    // Record analytics export event
+    await AnalyticsRepository.recordEvent({
+      eventType: "store_exported",
+      storeId: store.id,
+      storeName: store.name,
+      clientId: store.clientId,
+      clientName: store.clientName,
+      industry: store.industry,
+      templateId: store.templateId,
+      userId: session.user?.id || undefined,
+      userEmail,
+      metadata: {
+        mode,
+        fileSizeBytes: bundle.fileSizeBytes,
+      },
     });
 
     return NextResponse.json({

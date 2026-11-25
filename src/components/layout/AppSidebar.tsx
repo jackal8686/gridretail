@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
+  BarChart3,
   Store,
   Users,
   Palette,
@@ -16,10 +17,12 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { MAIN_NAV_ITEMS, NavItem } from "@/constants/navigation";
+import { siteConfig } from "@/config/site";
 import { cn } from "@/utils/cn";
 
 const ICON_MAP = {
   LayoutDashboard,
+  BarChart3,
   Store,
   Users,
   Palette,
@@ -172,10 +175,10 @@ export function AppSidebar({ mobileOpen = false, onMobileClose }: AppSidebarProp
               <div className="flex items-center justify-between text-xs px-2 py-1 bg-white rounded-md border border-[#E4E9E5] text-[#66736C]">
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck className="h-3.5 w-3.5 text-[#16804A]" />
-                  <span>Phase 2 Platform</span>
+                  <span>GridRetail Enterprise</span>
                 </span>
                 <span className="text-[10px] bg-[#E2F5E9] text-[#176B4D] px-1.5 py-0.5 rounded font-mono">
-                  v2.0.0
+                  v{siteConfig.version}
                 </span>
               </div>
 
@@ -189,7 +192,13 @@ export function AppSidebar({ mobileOpen = false, onMobileClose }: AppSidebarProp
                     {session?.user?.name || "Alex Mercer"}
                   </p>
                   <p className="text-[11px] text-[#66736C] truncate capitalize">
-                    {session?.user?.role === "admin" ? "Internal Admin" : "Retail Employee"}
+                    {session?.user?.role === "admin"
+                      ? "Platform Admin"
+                      : session?.user?.role === "sales_director"
+                      ? "Sales Director"
+                      : session?.user?.role === "account_manager"
+                      ? "Account Manager"
+                      : "Demo Specialist"}
                   </p>
                 </div>
               </div>

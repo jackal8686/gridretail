@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db/mongodb";
+import { getDb, isFallbackAllowed, DatabaseUnavailableError } from "@/lib/db/mongodb";
 import { MediaAsset } from "@/types/media";
 
 let memoryAssets: MediaAsset[] = [];
@@ -6,10 +6,16 @@ let memoryAssets: MediaAsset[] = [];
 export const MediaAssetRepository = {
   async create(asset: MediaAsset): Promise<MediaAsset> {
     const db = await getDb();
+    if (!db && !isFallbackAllowed()) {
+      throw new DatabaseUnavailableError("Cannot create media asset: database is unavailable in production.");
+    }
     if (db) {
       try {
         await db.collection<MediaAsset>("media_assets").insertOne({ ...asset });
       } catch (err) {
+        if (!isFallbackAllowed()) {
+          throw err;
+        }
         console.warn("MongoDB insert error in MediaAssetRepository.create:", err);
       }
     }
@@ -54,10 +60,16 @@ export const MediaAssetRepository = {
 
   async delete(id: string): Promise<boolean> {
     const db = await getDb();
+    if (!db && !isFallbackAllowed()) {
+      throw new DatabaseUnavailableError("Cannot delete media asset: database is unavailable in production.");
+    }
     if (db) {
       try {
         await db.collection<MediaAsset>("media_assets").deleteOne({ id });
       } catch (err) {
+        if (!isFallbackAllowed()) {
+          throw err;
+        }
         console.warn("MongoDB delete error in MediaAssetRepository.delete:", err);
       }
     }

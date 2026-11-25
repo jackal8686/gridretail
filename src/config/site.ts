@@ -3,9 +3,9 @@
  */
 export const siteConfig = {
   name: "GridRetail",
-  tagline: "E-Commerce Demo Generation Platform",
-  description: "Enterprise platform for generating tailored, high-converting retail storefronts and demo stores for clients in minutes.",
-  version: "1.0.0-phase1",
+  tagline: "Internal Website Generation Platform",
+  description: "Enterprise platform for generating tailored, high-converting retail, appointment, and lead generation websites for clients in minutes.",
+  version: "1.0.0",
   author: "GridRetail Engineering Team",
   company: "GridRetail Inc.",
   links: {

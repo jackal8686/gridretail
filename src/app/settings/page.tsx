@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import {
   Sliders,
-  Palette,
   User as UserIcon,
   Bell,
   Check,
@@ -25,15 +24,28 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "admin";
 
-  const [activeTab, setActiveTab] = useState<"general" | "appearance" | "account" | "notifications" | "team">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "account" | "notifications" | "team">("general");
 
-  // Local interactive state
+  // Local interactive state with server & localStorage persistence
   const [workspaceName, setWorkspaceName] = useState("GridRetail Global Studio");
-  const [primaryBrandColor, setPrimaryBrandColor] = useState("#176B4D");
-  const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
+  const [storeExpiry, setStoreExpiry] = useState("14");
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [reviewAlerts, setReviewAlerts] = useState(true);
   const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
+
+  // Profile and Password State
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // Admin Team Management State
   const [teamUsers, setTeamUsers] = useState<SafeUser[]>([]);
@@ -48,7 +60,6 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "general", label: "General", icon: Sliders },
-    { id: "appearance", label: "Appearance", icon: Palette },
     { id: "account", label: "Account Profile", icon: UserIcon },
     { id: "team", label: "Team & Security", icon: Users },
     { id: "notifications", label: "Notifications", icon: Bell },
@@ -59,6 +70,152 @@ export default function SettingsPage() {
     setTimeout(() => {
       setFeedbackNotice(null);
     }, 4500);
+  };
+
+  // Sync profile fields from session on load
+  useEffect(() => {
+    if (session?.user) {
+      if (!profileName) setProfileName(session.user.name || "");
+      if (!profileEmail) setProfileEmail(session.user.email || "");
+    }
+  }, [session, profileName, profileEmail]);
+
+  // Load persisted general settings on mount from API with localStorage fallback
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings) {
+            setWorkspaceName(data.settings.workspaceName || "GridRetail Global Studio");
+            setStoreExpiry(String(data.settings.storeExpiryDays || 14));
+            setEmailAlerts(data.settings.emailAlerts !== false);
+            setReviewAlerts(data.settings.reviewAlerts !== false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch settings from API:", err);
+      }
+
+      if (typeof window !== "undefined") {
+        const savedName = localStorage.getItem("gridretail_workspace_name");
+        if (savedName) setWorkspaceName(savedName);
+        const savedExpiry = localStorage.getItem("gridretail_store_expiry");
+        if (savedExpiry) setStoreExpiry(savedExpiry);
+        const savedEmailAlerts = localStorage.getItem("gridretail_email_alerts");
+        if (savedEmailAlerts !== null) setEmailAlerts(savedEmailAlerts === "true");
+        const savedReviewAlerts = localStorage.getItem("gridretail_review_alerts");
+        if (savedReviewAlerts !== null) setReviewAlerts(savedReviewAlerts === "true");
+      }
+    }
+    loadSettings();
+  }, []);
+
+  const handleSaveGeneral = async () => {
+    try {
+      await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspaceName,
+          storeExpiryDays: parseInt(storeExpiry, 10) || 14,
+        }),
+      });
+      if (typeof window !== "undefined") {
+        localStorage.setItem("gridretail_workspace_name", workspaceName);
+        localStorage.setItem("gridretail_store_expiry", storeExpiry);
+      }
+      showNotification("Workspace settings saved to server successfully.");
+    } catch {
+      showNotification("Failed to save workspace settings.");
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    try {
+      await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emailAlerts,
+          reviewAlerts,
+        }),
+      });
+      if (typeof window !== "undefined") {
+        localStorage.setItem("gridretail_email_alerts", String(emailAlerts));
+        localStorage.setItem("gridretail_review_alerts", String(reviewAlerts));
+      }
+      showNotification("Notification preferences saved to server successfully.");
+    } catch {
+      showNotification("Failed to save notifications.");
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingProfile(true);
+    setProfileMessage(null);
+    setProfileError(null);
+    try {
+      const res = await fetch("/api/users/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: profileName, email: profileEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setProfileError(data.error || "Failed to update profile.");
+        return;
+      }
+      setProfileMessage("Profile updated successfully.");
+      showNotification("Account profile updated successfully.");
+    } catch {
+      setProfileError("Network error while updating profile.");
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingPassword(true);
+    setPasswordMessage(null);
+    setPasswordError(null);
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      setIsUpdatingPassword(false);
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters long.");
+      setIsUpdatingPassword(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/users/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPasswordError(data.error || "Failed to change password.");
+        return;
+      }
+      setPasswordMessage("Password changed successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      showNotification("Account password changed successfully.");
+    } catch {
+      setPasswordError("Network error while updating password.");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   useEffect(() => {
@@ -195,7 +352,7 @@ export default function SettingsPage() {
                 <div>
                   <CardTitle>General Workspace Settings</CardTitle>
                   <CardDescription>
-                    Workspace identifier, default demo naming conventions, and localization.
+                    Workstation identifier and default demo store parameters (Stored in local browser workspace storage).
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -217,24 +374,11 @@ export default function SettingsPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-[#18231E]">
-                    Default Currency & Locale
-                  </label>
-                  <select
-                    defaultValue="USD"
-                    className="w-full max-w-lg rounded-lg border border-[#E4E9E5] px-3.5 py-2 text-sm text-[#18231E] focus:outline-hidden focus:ring-1 focus:ring-[#176B4D]"
-                  >
-                    <option value="USD">USD ($) — United States Dollar</option>
-                    <option value="EUR">EUR (€) — Euro</option>
-                    <option value="GBP">GBP (£) — British Pound</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-[#18231E]">
                     Default Demo Store Expiry
                   </label>
                   <select
-                    defaultValue="14"
+                    value={storeExpiry}
+                    onChange={(e) => setStoreExpiry(e.target.value)}
                     className="w-full max-w-lg rounded-lg border border-[#E4E9E5] px-3.5 py-2 text-sm text-[#18231E] focus:outline-hidden focus:ring-1 focus:ring-[#176B4D]"
                   >
                     <option value="7">7 Days after generation</option>
@@ -244,11 +388,11 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <span className="text-xs text-[#66736C]">Changes update local session state</span>
+                <span className="text-xs text-[#66736C]">Saved to local browser workspace storage</span>
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => showNotification("Workspace settings saved.")}
+                  onClick={handleSaveGeneral}
                   leftIcon={<Save className="h-3.5 w-3.5" />}
                 >
                   Save General Settings
@@ -257,131 +401,173 @@ export default function SettingsPage() {
             </Card>
           )}
 
-          {activeTab === "appearance" && (
-            <Card>
-              <CardHeader>
-                <div>
-                  <CardTitle>Appearance & Design Tokens</CardTitle>
-                  <CardDescription>
-                    Customise the dashboard color emphasis and layout density.
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <label className="text-xs font-semibold text-[#18231E] block mb-2">
-                    Primary Accent Theme
-                  </label>
-                  <div className="flex items-center gap-3">
-                    {[
-                      { name: "Grid Forest (Default)", color: "#176B4D" },
-                      { name: "Deep Emerald", color: "#104D38" },
-                      { name: "Nordic Sage", color: "#3D604E" },
-                      { name: "Classic Navy", color: "#1E3A5F" },
-                    ].map((palette) => (
-                      <button
-                        key={palette.color}
-                        type="button"
-                        onClick={() => setPrimaryBrandColor(palette.color)}
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer",
-                          primaryBrandColor === palette.color
-                            ? "border-[#176B4D] bg-[#E2F5E9] text-[#176B4D]"
-                            : "border-[#E4E9E5] bg-white text-[#4F5D56] hover:bg-[#FAF9F6]"
-                        )}
-                      >
-                        <span
-                          className="h-3.5 w-3.5 rounded-full border border-black/10 shrink-0"
-                          style={{ backgroundColor: palette.color }}
-                        />
-                        <span>{palette.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-[#18231E] block mb-2">
-                    Display Density
-                  </label>
-                  <div className="grid grid-cols-2 max-w-md gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setDensity("comfortable")}
-                      className={cn(
-                        "p-3 rounded-lg border text-left text-xs transition-all cursor-pointer",
-                        density === "comfortable"
-                          ? "border-[#176B4D] bg-[#E2F5E9] text-[#176B4D]"
-                          : "border-[#E4E9E5] bg-white text-[#4F5D56] hover:bg-[#FAF9F6]"
-                      )}
-                    >
-                      <p className="font-semibold">Comfortable</p>
-                      <p className="text-[11px] text-[#66736C] mt-0.5">Spacious cards and generous padding</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDensity("compact")}
-                      className={cn(
-                        "p-3 rounded-lg border text-left text-xs transition-all cursor-pointer",
-                        density === "compact"
-                          ? "border-[#176B4D] bg-[#E2F5E9] text-[#176B4D]"
-                          : "border-[#E4E9E5] bg-white text-[#4F5D56] hover:bg-[#FAF9F6]"
-                      )}
-                    >
-                      <p className="font-semibold">Compact</p>
-                      <p className="text-[11px] text-[#66736C] mt-0.5">High-density lists and tighter spacing</p>
-                    </button>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <span className="text-xs text-[#66736C]">Preview updates active immediately</span>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => showNotification("Appearance preferences updated.")}
-                  leftIcon={<Save className="h-3.5 w-3.5" />}
-                >
-                  Apply Appearance
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
-
           {activeTab === "account" && (
-            <Card>
-              <CardHeader>
-                <div>
-                  <CardTitle>Account Profile</CardTitle>
-                  <CardDescription>
-                    Current signed-in operator identity and permissions.
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4 pb-4 border-b border-[#F0F4F1]">
-                  <div className="h-14 w-14 rounded-full bg-[#176B4D] text-white flex items-center justify-center font-bold text-lg shadow-xs">
-                    {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "A"}
-                  </div>
+            <div className="space-y-6">
+              {/* Profile Card */}
+              <Card>
+                <CardHeader>
                   <div>
-                    <h3 className="text-sm font-semibold text-[#18231E]">
-                      {session?.user?.name || "Alex Mercer"}
-                    </h3>
-                    <p className="text-xs text-[#66736C]">{session?.user?.email || "alex.mercer@gridretail.internal"}</p>
-                    <span className="inline-block mt-1 text-[11px] font-medium text-[#176B4D] bg-[#E2F5E9] px-2 py-0.5 rounded capitalize">
-                      Role: {session?.user?.role || "admin"}
-                    </span>
+                    <CardTitle>Account Profile</CardTitle>
+                    <CardDescription>
+                      Update your operator profile details, display name, and contact email.
+                    </CardDescription>
                   </div>
-                </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="flex items-center gap-4 pb-4 border-b border-[#F0F4F1]">
+                    <div className="h-14 w-14 rounded-full bg-[#176B4D] text-white flex items-center justify-center font-bold text-lg shadow-xs">
+                      {profileName ? profileName.charAt(0).toUpperCase() : "A"}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-[#18231E]">
+                        {profileName || session?.user?.name || "Alex Mercer"}
+                      </h3>
+                      <p className="text-xs text-[#66736C]">
+                        {profileEmail || session?.user?.email || "alex.mercer@gridretail.internal"}
+                      </p>
+                      <span className="inline-block mt-1 text-[11px] font-medium text-[#176B4D] bg-[#E2F5E9] px-2 py-0.5 rounded capitalize">
+                        Role: {session?.user?.role || "admin"}
+                      </span>
+                    </div>
+                  </div>
 
-                <div className="text-xs text-[#66736C] p-3 rounded-lg bg-[#FAF9F6] border border-[#E4E9E5] flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-[#176B4D] shrink-0" />
-                  <span>
-                    Authenticated via Auth.js Credentials Provider with server-side JWT session.
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+                  {profileMessage && (
+                    <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
+                      {profileMessage}
+                    </div>
+                  )}
+                  {profileError && (
+                    <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
+                      {profileError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-[#18231E]">
+                          Display Name
+                        </label>
+                        <input
+                          type="text"
+                          value={profileName}
+                          onChange={(e) => setProfileName(e.target.value)}
+                          required
+                          className="w-full rounded-lg border border-[#E4E9E5] px-3.5 py-2 text-sm text-[#18231E] focus:outline-hidden focus:ring-1 focus:ring-[#176B4D]"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-[#18231E]">
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={profileEmail}
+                          onChange={(e) => setProfileEmail(e.target.value)}
+                          required
+                          className="w-full rounded-lg border border-[#E4E9E5] px-3.5 py-2 text-sm text-[#18231E] focus:outline-hidden focus:ring-1 focus:ring-[#176B4D]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="sm"
+                        disabled={isUpdatingProfile}
+                        className="bg-[#176B4D] text-white hover:bg-[#12533B]"
+                      >
+                        {isUpdatingProfile ? "Saving Profile..." : "Save Profile Changes"}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Password Change Card */}
+              <Card>
+                <CardHeader>
+                  <div>
+                    <CardTitle>Change Password</CardTitle>
+                    <CardDescription>
+                      Update your account password. Requires your current password for security verification.
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {passwordMessage && (
+                    <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
+                      {passwordMessage}
+                    </div>
+                  )}
+                  {passwordError && (
+                    <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
+                      {passwordError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleChangePassword} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-[#18231E]">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        required
+                        placeholder="Enter your current password"
+                        className="w-full max-w-md rounded-lg border border-[#E4E9E5] px-3.5 py-2 text-sm text-[#18231E] focus:outline-hidden focus:ring-1 focus:ring-[#176B4D]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-[#18231E]">
+                          New Password
+                        </label>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          required
+                          minLength={8}
+                          placeholder="Min 8 characters"
+                          className="w-full rounded-lg border border-[#E4E9E5] px-3.5 py-2 text-sm text-[#18231E] focus:outline-hidden focus:ring-1 focus:ring-[#176B4D]"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-[#18231E]">
+                          Confirm New Password
+                        </label>
+                        <input
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          minLength={8}
+                          placeholder="Confirm new password"
+                          className="w-full rounded-lg border border-[#E4E9E5] px-3.5 py-2 text-sm text-[#18231E] focus:outline-hidden focus:ring-1 focus:ring-[#176B4D]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="sm"
+                        disabled={isUpdatingPassword}
+                        className="bg-[#176B4D] text-white hover:bg-[#12533B]"
+                      >
+                        {isUpdatingPassword ? "Updating Password..." : "Update Password"}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {activeTab === "team" && (
@@ -524,11 +710,11 @@ export default function SettingsPage() {
                 </label>
               </CardContent>
               <CardFooter>
-                <span className="text-xs text-[#66736C]">Local notification toggles</span>
+                <span className="text-xs text-[#66736C]">Saved to local browser notification preferences</span>
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => showNotification("Notification preferences saved.")}
+                  onClick={handleSaveNotifications}
                   leftIcon={<Save className="h-3.5 w-3.5" />}
                 >
                   Save Preferences

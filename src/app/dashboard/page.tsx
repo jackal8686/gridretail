@@ -45,7 +45,7 @@ export default function DashboardPage() {
       {/* Page Header */}
       <PageHeader
         title="Store Workspace"
-        description="Generate, configure, and manage high-converting e-commerce demo storefronts tailored for client pitch meetings."
+        description="Generate, configure, and manage high-converting client websites across e-commerce, appointment scheduling, and lead generation."
         badge={
           <span className="text-xs bg-[#E2F5E9] text-[#176B4D] px-2.5 py-0.5 rounded-full font-medium border border-[#C8E8D5]">
             Live Workspace
@@ -89,7 +89,7 @@ export default function DashboardPage() {
         <>
           {/* KPI Cards Row */}
           <section aria-label="Key Performance Indicators">
-            <MetricCards metrics={dynamicMetrics} />
+            <MetricCards metrics={dynamicMetrics} stores={stores} />
           </section>
 
           {/* Main Content Grid: Tables & Quick Actions */}

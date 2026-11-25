@@ -1,4 +1,5 @@
 import { EmailNotification } from "@/types/notification";
+import { Logger } from "@/lib/logger";
 
 export interface EmailSendResult {
   success: boolean;
@@ -22,13 +23,14 @@ export class ConsoleMockEmailProvider implements EmailProvider {
     this.outbox.push({ ...notification });
 
     if (process.env.NODE_ENV !== "test") {
-      console.log(`\n📧 [EMAIL DISPATCH - ${notification.event.toUpperCase()}]`);
-      console.log(`To: ${notification.to}`);
-      console.log(`From: ${notification.from}`);
-      console.log(`Subject: ${notification.subject}`);
-      console.log(`Store: ${notification.storeName} (${notification.storeId})`);
-      console.log(`Text Preview: ${notification.textBody.slice(0, 150)}...`);
-      console.log(`----------------------------------------------------\n`);
+      Logger.info(`[SIMULATED EMAIL DISPATCH - ${notification.event.toUpperCase()}]`, {
+        to: notification.to,
+        from: notification.from,
+        subject: notification.subject,
+        storeName: notification.storeName,
+        storeId: notification.storeId,
+        preview: notification.textBody.slice(0, 150),
+      });
     }
 
     return {
@@ -77,7 +79,10 @@ export class SmtpEmailProvider implements EmailProvider {
       };
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "SMTP transmission failure";
-      console.error(`[SMTP Error] Failed to send email to ${notification.to}:`, errorMessage);
+      Logger.error(`[SMTP Error] Failed to send email`, {
+        to: notification.to,
+        error: errorMessage,
+      });
       return {
         success: false,
         error: errorMessage,

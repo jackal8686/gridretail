@@ -1,7 +1,12 @@
 import { MongoClient, Db } from "mongodb";
 
-const MONGODB_URI = process.env.MONGODB_URI;
-const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || "gridretail";
+function getMongoUri(): string | undefined {
+  return process.env.MONGODB_URI;
+}
+
+function getMongoDbName(): string {
+  return process.env.MONGODB_DB_NAME || "gridretail";
+}
 
 interface GlobalMongo {
   _mongoClientPromise?: Promise<MongoClient>;
@@ -11,24 +16,50 @@ declare const global: typeof globalThis & GlobalMongo;
 
 let clientPromise: Promise<MongoClient> | null = null;
 
+export class DatabaseUnavailableError extends Error {
+  constructor(message = "Database is unavailable. In-memory fallback is disabled in production.") {
+    super(message);
+    this.name = "DatabaseUnavailableError";
+  }
+}
+
+export function isProductionEnvironment(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
+export function isFallbackAllowed(): boolean {
+  if (process.env.ALLOW_IN_MEMORY_FALLBACK === "true") {
+    return true;
+  }
+  return !isProductionEnvironment();
+}
+
+export function assertDatabaseWritable(db: Db | null, operation = "write"): asserts db is Db {
+  if (!db && !isFallbackAllowed()) {
+    throw new DatabaseUnavailableError(`Cannot execute ${operation} operation: database is unavailable in production.`);
+  }
+}
+
 export function hasMongoConfig(): boolean {
-  return Boolean(MONGODB_URI && MONGODB_URI.trim().length > 0);
+  const uri = getMongoUri();
+  return Boolean(uri && uri.trim().length > 0);
 }
 
 export function getMongoClientPromise(): Promise<MongoClient> | null {
-  if (!hasMongoConfig()) {
+  const uri = getMongoUri();
+  if (!uri || uri.trim().length === 0) {
     return null;
   }
 
   if (process.env.NODE_ENV === "development") {
     if (!global._mongoClientPromise) {
-      const client = new MongoClient(MONGODB_URI!);
+      const client = new MongoClient(uri);
       global._mongoClientPromise = client.connect();
     }
     return global._mongoClientPromise;
   } else {
     if (!clientPromise) {
-      const client = new MongoClient(MONGODB_URI!);
+      const client = new MongoClient(uri);
       clientPromise = client.connect();
     }
     return clientPromise;
@@ -42,7 +73,7 @@ export async function getDb(): Promise<Db | null> {
   }
   try {
     const client = await promise;
-    return client.db(MONGODB_DB_NAME);
+    return client.db(getMongoDbName());
   } catch (error) {
     console.error("MongoDB Atlas connection error:", error instanceof Error ? error.message : "Connection failed");
     return null;
@@ -58,7 +89,7 @@ export async function checkDatabaseHealth(): Promise<{
   if (!hasMongoConfig()) {
     return {
       connected: false,
-      database: MONGODB_DB_NAME,
+      database: getMongoDbName(),
       configured: false,
       message: "MONGODB_URI environment variable is not configured. Running in in-memory fallback mode.",
     };
@@ -69,7 +100,7 @@ export async function checkDatabaseHealth(): Promise<{
     if (!db) {
       return {
         connected: false,
-        database: MONGODB_DB_NAME,
+        database: getMongoDbName(),
         configured: true,
         message: "Failed to resolve database client.",
       };
@@ -78,14 +109,14 @@ export async function checkDatabaseHealth(): Promise<{
     await db.command({ ping: 1 });
     return {
       connected: true,
-      database: MONGODB_DB_NAME,
+      database: getMongoDbName(),
       configured: true,
       message: "Successfully connected to MongoDB Atlas.",
     };
   } catch (error) {
     return {
       connected: false,
-      database: MONGODB_DB_NAME,
+      database: getMongoDbName(),
       configured: true,
       message: `Database ping failed: ${error instanceof Error ? error.message : "Unknown error"}`,
     };

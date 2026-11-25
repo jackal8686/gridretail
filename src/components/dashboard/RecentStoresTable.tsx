@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Store } from "@/types";
+import { getWebsiteTypeLabel, getWebsiteTypeBadgeClass } from "@/utils/store-types";
 
 interface RecentStoresTableProps {
   stores: Store[];
@@ -31,15 +32,15 @@ export function RecentStoresTable({ stores }: RecentStoresTableProps) {
 
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="w-full text-left border-collapse text-sm min-w-[760px]">
             <thead>
               <tr className="border-b border-[#F0F4F1] bg-[#FAF9F6] text-[11px] font-semibold text-[#66736C] uppercase tracking-wider">
-                <th className="px-6 py-3.5">Store & Client</th>
-                <th className="px-6 py-3.5">Industry</th>
-                <th className="px-6 py-3.5">Template</th>
-                <th className="px-6 py-3.5">Status</th>
-                <th className="px-6 py-3.5">Last Updated</th>
-                <th className="px-6 py-3.5 text-right">Action</th>
+                <th className="px-6 py-3.5 min-w-[220px]">Store & Client</th>
+                <th className="px-6 py-3.5 min-w-[150px]">Industry</th>
+                <th className="px-6 py-3.5 min-w-[130px]">Template</th>
+                <th className="px-6 py-3.5 min-w-[110px] whitespace-nowrap">Status</th>
+                <th className="px-6 py-3.5 min-w-[130px] whitespace-nowrap">Last Updated</th>
+                <th className="px-6 py-3.5 text-right min-w-[100px] whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F0F4F1]">
@@ -54,9 +55,18 @@ export function RecentStoresTable({ stores }: RecentStoresTableProps) {
                         <StoreIcon className="h-4.5 w-4.5" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-[#18231E] truncate group-hover:text-[#176B4D] transition-colors">
-                          {store.name}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-semibold text-[#18231E] truncate group-hover:text-[#176B4D] transition-colors">
+                            {store.name}
+                          </p>
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${getWebsiteTypeBadgeClass(
+                              store.websiteType
+                            )}`}
+                          >
+                            {getWebsiteTypeLabel(store.websiteType)}
+                          </span>
+                        </div>
                         <p className="text-xs text-[#66736C] truncate">
                           {store.clientName}
                         </p>
@@ -65,7 +75,7 @@ export function RecentStoresTable({ stores }: RecentStoresTableProps) {
                   </td>
 
                   <td className="px-6 py-4">
-                    <span className="text-xs font-medium text-[#4F5D56] bg-[#F0F4F1] px-2.5 py-1 rounded-md">
+                    <span className="text-xs font-medium text-[#4F5D56] bg-[#F0F4F1] px-2.5 py-1 rounded-md whitespace-nowrap">
                       {store.industry}
                     </span>
                   </td>
@@ -74,11 +84,11 @@ export function RecentStoresTable({ stores }: RecentStoresTableProps) {
                     {store.templateName}
                   </td>
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <StatusBadge status={store.status} size="sm" />
                   </td>
 
-                  <td className="px-6 py-4 text-xs text-[#66736C]">
+                  <td className="px-6 py-4 text-xs text-[#66736C] whitespace-nowrap">
                     {new Date(store.lastUpdated).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",

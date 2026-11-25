@@ -7,5 +7,13 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("search") || undefined;
 
   const templates = await TemplateRepository.findAll({ industry, search });
-  return NextResponse.json({ templates, count: templates.length });
+  const designTemplates = await TemplateRepository.findAllDesignTemplates();
+  const themes = await TemplateRepository.findAllThemes();
+
+  return NextResponse.json({
+    templates,
+    count: templates.length,
+    designTemplates,
+    themes,
+  });
 }

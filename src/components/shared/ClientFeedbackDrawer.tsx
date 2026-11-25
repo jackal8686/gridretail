@@ -30,9 +30,19 @@ export function ClientFeedbackDrawer({
   const [authorName, setAuthorName] = useState(clientName);
   const [message, setMessage] = useState("");
   const [feedbackType, setFeedbackType] = useState<"general" | "approval" | "changes_requested">("general");
+  const [selectedAnchor, setSelectedAnchor] = useState<string>("general");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const ANCHOR_OPTIONS = [
+    { id: "general", label: "Whole Storefront (General)", type: "general" as const },
+    { id: "section.hero", label: "Hero Banner", type: "section" as const },
+    { id: "section.featured_products", label: "Featured Products Grid", type: "section" as const },
+    { id: "section.about", label: "About Brand Section", type: "section" as const },
+    { id: "section.newsletter", label: "Newsletter Signup", type: "section" as const },
+    { id: "section.footer", label: "Footer & Legal", type: "section" as const },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +53,9 @@ export function ClientFeedbackDrawer({
     setSubmitSuccess(null);
 
     try {
+      const anchorItem = ANCHOR_OPTIONS.find((a) => a.id === selectedAnchor);
+
+      // Submit feedback record
       const res = await fetch(`/api/preview/${token}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -56,6 +69,23 @@ export function ClientFeedbackDrawer({
       if (!res.ok) {
         const errData = await res.json();
         throw new Error(errData.error || "Failed to submit feedback.");
+      }
+
+      // Also record anchored collaboration comment
+      try {
+        await fetch(`/api/preview/${token}/comments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            authorName: authorName.trim() || clientName,
+            anchorType: anchorItem?.type || "general",
+            anchorId: selectedAnchor,
+            anchorLabel: anchorItem?.label || "General",
+            message: message.trim(),
+          }),
+        });
+      } catch {
+        // Non-blocking for primary feedback
       }
 
       const data = await res.json();
@@ -182,6 +212,21 @@ export function ClientFeedbackDrawer({
                     Approve Store
                   </button>
                 </div>
+              </div>
+
+              <div>
+                <label className="font-semibold text-[#18231E] block mb-1">Anchor Target (Optional)</label>
+                <select
+                  value={selectedAnchor}
+                  onChange={(e) => setSelectedAnchor(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-md border border-[#CCD5CE] focus:border-[#176B4D] focus:outline-hidden text-xs bg-white"
+                >
+                  {ANCHOR_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

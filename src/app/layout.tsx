@@ -1,36 +1,31 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { headers } from "next/headers";
 import { AppShell } from "@/components/layout/AppShell";
-import { SessionWrapper } from "@/components/shared/SessionWrapper";
 import { siteConfig } from "@/config/site";
+import { parseSubdomain } from "@/lib/urls";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = { variable: "" };
+const geistMono = { variable: "" };
 
 export const metadata: Metadata = {
   title: `${siteConfig.name} — ${siteConfig.tagline}`,
   description: siteConfig.description,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const host = headersList.get("x-forwarded-host") || headersList.get("host") || "";
+  const { isSubdomain } = parseSubdomain(host);
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <SessionWrapper>
-          <AppShell>{children}</AppShell>
-        </SessionWrapper>
+        {isSubdomain ? children : <AppShell>{children}</AppShell>}
       </body>
     </html>
   );

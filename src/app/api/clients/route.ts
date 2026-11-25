@@ -20,15 +20,31 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    if (!body.company || body.company.trim().length < 2) {
-      return NextResponse.json({ error: "Company name is required." }, { status: 400 });
+    const companyTrimmed = body.company?.trim();
+    if (!companyTrimmed || companyTrimmed.length < 2 || companyTrimmed.length > 100) {
+      return NextResponse.json(
+        { error: "Company name is required and must be between 2 and 100 characters." },
+        { status: 400 }
+      );
+    }
+
+    const existingClient = await ClientRepository.findByCompany(companyTrimmed);
+    if (existingClient) {
+      return NextResponse.json(
+        {
+          error: `A client account named "${existingClient.company}" already exists.`,
+          client: existingClient,
+          duplicate: true,
+        },
+        { status: 409 }
+      );
     }
 
     const newClient: Client = {
       id: `cli_${Date.now()}`,
       name: body.name?.trim() || "Account Lead",
-      company: body.company.trim(),
-      contactEmail: body.contactEmail?.trim() || `${body.company.toLowerCase().replace(/\s+/g, "")}@example.demo`,
+      company: companyTrimmed,
+      contactEmail: body.contactEmail?.trim() || `${companyTrimmed.toLowerCase().replace(/\s+/g, "")}@example.demo`,
       contactPhone: body.contactPhone?.trim() || "+1 (555) 000-0000",
       industry: body.industry || "General Retail",
       storeCount: 0,

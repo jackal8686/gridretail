@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { UserRepository } from "@/lib/repositories/user.repository";
 import { verifyPassword, normalizeEmail } from "@/lib/validation/user";
 import { UserRole } from "@/types";
+import { authConfig } from "./auth.config";
 
 declare module "next-auth" {
   interface User {
@@ -27,6 +28,7 @@ declare module "@auth/core/jwt" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     CredentialsProvider({
       name: "GridRetail Credentials",
@@ -56,8 +58,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        // Record last login
-        await UserRepository.updateLastLogin(user.id);
+        // Record last login asynchronously without blocking the authentication response
+        UserRepository.updateLastLogin(user.id).catch((err) => {
+          console.error("Failed to update last login timestamp:", err);
+        });
 
         return {
           id: user.id,
@@ -69,32 +73,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  pages: {
-    signIn: "/login",
-    signOut: "/login",
-    error: "/login",
-  },
-  session: {
-    strategy: "jwt",
-    maxAge: 8 * 60 * 60, // 8 hours session duration
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.status = user.status;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user && token) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as UserRole;
-      }
-      return session;
-    },
-  },
-  secret: process.env.AUTH_SECRET || "gridretail_dev_secret_key_minimum_32_characters_long",
-  trustHost: true,
 });

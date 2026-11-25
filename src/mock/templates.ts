@@ -1,5 +1,14 @@
 import { Template } from "@/types";
+import { DESIGN_TEMPLATES } from "@/constants/design-templates";
+import { COLOR_THEMES } from "@/constants/themes";
 
+export const MOCK_DESIGN_TEMPLATES = DESIGN_TEMPLATES;
+export const MOCK_THEMES = COLOR_THEMES;
+
+/**
+ * Unified template registry providing both new design templates
+ * and legacy templates for seamless backward compatibility.
+ */
 export const MOCK_TEMPLATES: Template[] = [
   {
     id: "tpl_nordic_clean",

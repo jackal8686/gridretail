@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { StoreRepository } from "@/lib/repositories/store.repository";
 import { PreviewShareRepository } from "@/lib/repositories/preview-share.repository";
 import { ActivityRepository } from "@/lib/repositories/activity.repository";
+import { AnalyticsRepository } from "@/lib/repositories/analytics.repository";
 import { generateSecureToken, hashToken } from "@/lib/crypto/tokens";
 import { PreviewShare } from "@/types/preview-share";
 
@@ -78,6 +79,23 @@ export async function POST(
     },
     targetId: store.id,
     targetName: store.name,
+  });
+
+  // Record analytics event
+  await AnalyticsRepository.recordEvent({
+    eventType: "share_generated",
+    storeId: store.id,
+    storeName: store.name,
+    clientId: store.clientId,
+    clientName: store.clientName,
+    industry: store.industry,
+    templateId: store.templateId,
+    userId: session.user.id || undefined,
+    userEmail: session.user.email || undefined,
+    metadata: {
+      shareId: saved.id,
+      durationHours,
+    },
   });
 
   const previewUrl = `/preview/${rawToken}`;

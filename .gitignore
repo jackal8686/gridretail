@@ -41,6 +41,19 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# uploads
+# uploads & generated exports
 /public/uploads/*
 !/public/uploads/.gitkeep
+/storage/exports/
+/storage/deliveries/
+/storage/fallback-users.json
+/storage/staging/
+
+# agent & local logs
+.agent/
+*.log
+debug.log
+playwright-report/
+test-results/
+Thumbs.db
+

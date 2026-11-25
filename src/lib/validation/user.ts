@@ -23,9 +23,21 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
+  if (!password || !hash) return false;
+  try {
+    return await bcrypt.compare(password, hash);
+  } catch {
+    return false;
+  }
 }
 
+export const VALID_USER_ROLES: UserRole[] = [
+  "admin",
+  "sales_director",
+  "account_manager",
+  "employee",
+];
+
 export function isValidRole(role: string): role is UserRole {
-  return role === "admin" || role === "employee";
+  return VALID_USER_ROLES.includes(role as UserRole);
 }

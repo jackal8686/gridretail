@@ -5,10 +5,22 @@ import { StoreRepository } from "@/lib/repositories/store.repository";
 import { ProductRepository } from "@/lib/repositories/product.repository";
 import { TemplateRepository } from "@/lib/repositories/template.repository";
 import { FeedbackRepository } from "@/lib/repositories/feedback.repository";
+import { AnalyticsRepository } from "@/lib/repositories/analytics.repository";
 import { Product } from "@/types";
 import { StorefrontView } from "@/components/storefront/StorefrontView";
+import { AppointmentWebsiteView } from "@/components/storefront/AppointmentWebsiteView";
+import { LeadGenWebsiteView } from "@/components/storefront/LeadGenWebsiteView";
+import { ServiceRepository } from "@/lib/repositories/service.repository";
+import { ProviderRepository } from "@/lib/repositories/provider.repository";
+import { LeadFormRepository } from "@/lib/repositories/lead-form.repository";
 import { ClientFeedbackDrawer } from "@/components/shared/ClientFeedbackDrawer";
 import { ShieldAlert, Clock, Lock, Sparkles } from "lucide-react";
+import {
+  serializeStore,
+  serializeTemplate,
+  serializeProducts,
+  serializeFeedbackList,
+} from "@/lib/serialization";
 
 interface PublicPreviewPageProps {
   params: Promise<{ token: string }>;
@@ -48,8 +60,10 @@ export default async function PublicPreviewPage({ params }: PublicPreviewPagePro
     );
   }
 
-  // Record access count
-  await PreviewShareRepository.recordAccess(share.id);
+  // Record access count asynchronously without blocking render
+  PreviewShareRepository.recordAccess(share.id).catch((err) => {
+    console.error("Failed to record preview access:", err);
+  });
 
   // Load authorized store
   const store = await StoreRepository.findById(share.storeId);
@@ -57,21 +71,127 @@ export default async function PublicPreviewPage({ params }: PublicPreviewPagePro
     return <InvalidLinkView message="The storefront project associated with this link is unavailable." />;
   }
 
-  const template = await TemplateRepository.findById(store.templateId);
+  // Record analytics view event asynchronously without blocking render
+  AnalyticsRepository.recordEvent({
+    eventType: "preview_viewed",
+    storeId: store.id,
+    storeName: store.name,
+    clientId: store.clientId,
+    clientName: store.clientName,
+    industry: store.industry,
+    templateId: store.templateId,
+    visitorSessionId: share.id,
+    metadata: {
+      shareId: share.id,
+      accessCount: share.accessCount + 1,
+    },
+  }).catch((err) => {
+    console.error("Failed to record preview analytics:", err);
+  });
 
-  let products: Product[] = [];
-  if (store.selectedProductIds && store.selectedProductIds.length > 0) {
-    products = await ProductRepository.findByIds(store.selectedProductIds);
-  }
-  if (products.length === 0) {
-    products = await ProductRepository.findAll({ category: store.industry });
-  }
-  if (products.length === 0) {
-    products = await ProductRepository.findAll();
-  }
+  // Parallelize template, products, and feedback fetching
+  const loadProducts = async () => {
+    let prods: Product[] = [];
+    if (store.selectedProductIds && store.selectedProductIds.length > 0) {
+      prods = await ProductRepository.findByIds(store.selectedProductIds);
+    }
+    if (prods.length === 0) {
+      prods = await ProductRepository.findAll({ category: store.industry });
+    }
+    if (prods.length === 0) {
+      prods = await ProductRepository.findAll();
+    }
+    return prods;
+  };
 
-  // Fetch feedback history for this store
   const feedbackList = await FeedbackRepository.findByStoreId(store.id);
+
+  if (store.websiteType === "appointments") {
+    const [template, services, providers] = await Promise.all([
+      TemplateRepository.findById(store.templateId),
+      ServiceRepository.findByStoreId(store.id, { status: "active" }),
+      ProviderRepository.findByStoreId(store.id, { status: "active" }),
+    ]);
+
+    return (
+      <div>
+        {/* Top Client Pitch Bar */}
+        <div className="bg-[#18231E] text-white px-4 py-2 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-[#2C3B34]">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-emerald-400" />
+            <span className="font-semibold">Tailored Appointment Scheduling Website</span>
+            <span className="text-stone-400 hidden sm:inline">• Prepared exclusively for {share.clientName || store.clientName}</span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] text-stone-400">
+            <span>Expires: {new Date(share.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+            <span className="bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full font-medium">
+              Active Review
+            </span>
+          </div>
+        </div>
+
+        {/* Render Appointment Storefront */}
+        <AppointmentWebsiteView
+          store={serializeStore(store)}
+          services={services}
+          providers={providers}
+          template={template ? serializeTemplate(template) : null}
+          isPreview={true}
+        />
+
+        {/* Floating Client Feedback & Approval Drawer */}
+        <ClientFeedbackDrawer
+          token={token}
+          clientName={share.clientName || store.clientName}
+          storeName={store.name}
+          initialFeedback={serializeFeedbackList(feedbackList)}
+        />
+      </div>
+    );
+  }
+
+  if (store.websiteType === "lead_gen") {
+    const leadForm = await LeadFormRepository.findDefaultByStore(store.id);
+
+    return (
+      <div>
+        {/* Top Client Pitch Bar */}
+        <div className="bg-[#18231E] text-white px-4 py-2 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-[#2C3B34]">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-emerald-400" />
+            <span className="font-semibold">Tailored Lead Generation Website</span>
+            <span className="text-stone-400 hidden sm:inline">• Prepared exclusively for {share.clientName || store.clientName}</span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] text-stone-400">
+            <span>Expires: {new Date(share.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+            <span className="bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full font-medium">
+              Active Review
+            </span>
+          </div>
+        </div>
+
+        {/* Render Lead Gen Storefront */}
+        <LeadGenWebsiteView
+          store={serializeStore(store)}
+          leadForm={leadForm || undefined}
+          previewMode={true}
+        />
+
+        {/* Floating Client Feedback & Approval Drawer */}
+        <ClientFeedbackDrawer
+          token={token}
+          clientName={share.clientName || store.clientName}
+          storeName={store.name}
+          initialFeedback={serializeFeedbackList(feedbackList)}
+        />
+      </div>
+    );
+  }
+
+  const [template, products] = await Promise.all([
+    TemplateRepository.findById(store.templateId),
+    loadProducts(),
+  ]);
 
   return (
     <div>
@@ -92,9 +212,9 @@ export default async function PublicPreviewPage({ params }: PublicPreviewPagePro
 
       {/* Render Storefront */}
       <StorefrontView
-        initialStore={store}
-        template={template}
-        initialProducts={products}
+        initialStore={serializeStore(store)}
+        template={serializeTemplate(template)}
+        initialProducts={serializeProducts(products)}
         isPreviewMode={true}
       />
 
@@ -103,7 +223,7 @@ export default async function PublicPreviewPage({ params }: PublicPreviewPagePro
         token={token}
         clientName={share.clientName || store.clientName}
         storeName={store.name}
-        initialFeedback={feedbackList}
+        initialFeedback={serializeFeedbackList(feedbackList)}
       />
     </div>
   );

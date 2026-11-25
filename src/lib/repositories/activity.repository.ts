@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db/mongodb";
+import { getDb, isFallbackAllowed, DatabaseUnavailableError } from "@/lib/db/mongodb";
 import { ActivityItem } from "@/types";
 import { MOCK_ACTIVITIES } from "@/mock/activities";
 
@@ -40,10 +40,16 @@ export const ActivityRepository = {
     };
 
     const db = await getDb();
+    if (!db && !isFallbackAllowed()) {
+      throw new DatabaseUnavailableError("Cannot record activity: database is unavailable in production.");
+    }
     if (db) {
       try {
         await db.collection<ActivityItem>("activities").insertOne({ ...fullActivity });
       } catch (err) {
+        if (!isFallbackAllowed()) {
+          throw err;
+        }
         console.warn("MongoDB insert error in ActivityRepository.record:", err);
       }
     }

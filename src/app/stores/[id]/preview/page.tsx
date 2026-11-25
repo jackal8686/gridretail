@@ -1,44 +1,22 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
-  Monitor,
-  Tablet,
-  Smartphone,
-  RefreshCw,
-  ExternalLink,
   ArrowLeft,
   AlertCircle,
-  Save,
-  Check,
-  Palette,
-  Layout,
-  Type,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  ChevronDown,
-  GripVertical,
-  Package,
   Presentation,
   Share2,
-  MessageSquare,
-  Send,
-  CheckCircle2,
-  Upload,
-  Loader2,
+  Package,
+  Calendar as CalendarIcon,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ShareModal } from "@/components/shared/ShareModal";
 import { DeliveryModal } from "@/components/shared/DeliveryModal";
-import { Store, PreviewUpdatePayload, StoreFeedback } from "@/types";
-import { cn } from "@/utils/cn";
-
-type DevicePreset = "desktop" | "tablet" | "mobile";
-type ActiveTab = "branding" | "content" | "sections" | "feedback";
+import { Store } from "@/types";
+import { VisualEditorWorkspace } from "@/components/editor/VisualEditorWorkspace";
 
 export default function StoreCustomizerPreviewPage() {
   const params = useParams();
@@ -48,63 +26,14 @@ export default function StoreCustomizerPreviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Device & Canvas State
-  const [preset, setPreset] = useState<DevicePreset>("desktop");
-  const [iframeKey, setIframeKey] = useState(Date.now());
-  const [isIframeLoading, setIsIframeLoading] = useState(true);
-  const [isIframeReady, setIsIframeReady] = useState(false);
-  const [lastAckTime, setLastAckTime] = useState<number | null>(null);
-
-  // Customizer Drawer State
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("branding");
+  // Modals state
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
 
-  // Feedback State
-  const [feedbackList, setFeedbackList] = useState<StoreFeedback[]>([]);
-  const [replyMessage, setReplyMessage] = useState("");
-  const [isPostingReply, setIsPostingReply] = useState(false);
-
-  // Media Upload State
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
-  // Editable Form State
-  const [storeName, setStoreName] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#176B4D");
-  const [secondaryColor, setSecondaryColor] = useState("#FAF9F6");
-  const [fontFamily, setFontFamily] = useState("Inter, sans-serif");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [bannerUrl, setBannerUrl] = useState("");
-  const [heroHeadline, setHeroHeadline] = useState("");
-  const [heroSubheadline, setHeroSubheadline] = useState("");
-  const [aboutText, setAboutText] = useState("");
-  const [ctaText, setCtaText] = useState("Explore Catalog");
-  const [enabledSections, setEnabledSections] = useState<string[]>([
-    "hero",
-    "featured_products",
-    "about",
-    "newsletter",
-    "footer",
-  ]);
-  const [orderedSections, setOrderedSections] = useState<string[]>([
-    "hero",
-    "featured_products",
-    "about",
-    "newsletter",
-    "footer",
-  ]);
-  const [draggedSectionIndex, setDraggedSectionIndex] = useState<number | null>(null);
-
-  // Persistence & Save State
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  // Publishing State
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishSuccess, setPublishSuccess] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   // Initial Data Load
   useEffect(() => {
@@ -115,36 +44,7 @@ export default function StoreCustomizerPreviewPage() {
         const res = await fetch(`/api/stores/${id}`);
         if (res.ok) {
           const data = await res.json();
-          const s: Store = data.store;
-          setStore(s);
-          setStoreName(s.name);
-          setPrimaryColor(s.branding?.primaryColor || "#176B4D");
-          setSecondaryColor(s.branding?.secondaryColor || "#FAF9F6");
-          setFontFamily(s.branding?.fontFamily || "Inter, sans-serif");
-          setLogoUrl(s.branding?.logoUrl || "");
-          setBannerUrl(s.branding?.bannerUrl || "");
-          setHeroHeadline(s.branding?.heroHeadline || `Welcome to ${s.name}`);
-          setHeroSubheadline(
-            s.branding?.heroSubheadline ||
-              `Curated ${s.industry} collection designed for modern living.`
-          );
-          setAboutText(s.branding?.aboutText || s.description || "");
-          setCtaText(s.branding?.ctaText || "Explore Catalog");
-          if (s.enabledSections && s.enabledSections.length > 0) {
-            setEnabledSections(s.enabledSections);
-          }
-          if (s.orderedSections && s.orderedSections.length > 0) {
-            setOrderedSections(s.orderedSections);
-          } else {
-            setOrderedSections(["hero", "featured_products", "about", "newsletter", "footer"]);
-          }
-
-          // Fetch feedback
-          const fbRes = await fetch(`/api/stores/${id}/feedback`);
-          if (fbRes.ok) {
-            const fbData = await fbRes.json();
-            setFeedbackList(fbData.feedback || []);
-          }
+          setStore(data.store);
         } else {
           setError("Store record not found.");
         }
@@ -160,234 +60,33 @@ export default function StoreCustomizerPreviewPage() {
     }
   }, [id]);
 
-  // Send Live postMessage to Iframe
-  const sendPreviewUpdate = useCallback(
-    (payload: PreviewUpdatePayload) => {
-      if (!iframeRef.current || !iframeRef.current.contentWindow) return;
-
-      const targetOrigin = window.location.origin;
-      iframeRef.current.contentWindow.postMessage(
-        {
-          type: "GRIDRETAIL_PREVIEW_UPDATE",
-          payload,
-        },
-        targetOrigin
-      );
-    },
-    []
-  );
-
-  // Broadcast edits when state changes
-  useEffect(() => {
-    if (!store) return;
-
-    // Check if changes exist vs original store
-    const isDirty =
-      storeName !== store.name ||
-      primaryColor !== (store.branding?.primaryColor || "#176B4D") ||
-      secondaryColor !== (store.branding?.secondaryColor || "#FAF9F6") ||
-      fontFamily !== (store.branding?.fontFamily || "Inter, sans-serif") ||
-      logoUrl !== (store.branding?.logoUrl || "") ||
-      bannerUrl !== (store.branding?.bannerUrl || "") ||
-      heroHeadline !== (store.branding?.heroHeadline || `Welcome to ${store.name}`) ||
-      heroSubheadline !==
-        (store.branding?.heroSubheadline ||
-          `Curated ${store.industry} collection designed for modern living.`) ||
-      aboutText !== (store.branding?.aboutText || store.description || "") ||
-      ctaText !== (store.branding?.ctaText || "Explore Catalog") ||
-      JSON.stringify(enabledSections) !== JSON.stringify(store.enabledSections || []) ||
-      JSON.stringify(orderedSections) !==
-        JSON.stringify(
-          store.orderedSections || ["hero", "featured_products", "about", "newsletter", "footer"]
-        );
-
-    setHasUnsavedChanges(isDirty);
-
-    // Live sync with iframe
-    const payload: PreviewUpdatePayload = {
-      name: storeName,
-      branding: {
-        primaryColor,
-        secondaryColor,
-        fontFamily,
-        logoUrl,
-        bannerUrl,
-        heroHeadline,
-        heroSubheadline,
-        aboutText,
-        ctaText,
-      },
-      enabledSections,
-      orderedSections,
-    };
-
-    sendPreviewUpdate(payload);
-  }, [
-    store,
-    storeName,
-    primaryColor,
-    secondaryColor,
-    fontFamily,
-    logoUrl,
-    bannerUrl,
-    heroHeadline,
-    heroSubheadline,
-    aboutText,
-    ctaText,
-    enabledSections,
-    orderedSections,
-    sendPreviewUpdate,
-  ]);
-
-  // Listen for Iframe Handshakes and ACKs
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-
-      const data = event.data;
-      if (!data || typeof data !== "object") return;
-
-      if (data.type === "GRIDRETAIL_PREVIEW_READY") {
-        setIsIframeReady(true);
-        setIsIframeLoading(false);
-        // Dispatch current state immediately upon iframe readiness
-        sendPreviewUpdate({
-          name: storeName,
-          branding: {
-            primaryColor,
-            secondaryColor,
-            fontFamily,
-            logoUrl,
-            bannerUrl,
-            heroHeadline,
-            heroSubheadline,
-            aboutText,
-            ctaText,
-          },
-          enabledSections,
-          orderedSections,
-        });
-      } else if (data.type === "GRIDRETAIL_PREVIEW_ACK") {
-        setLastAckTime(data.timestamp);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [
-    storeName,
-    primaryColor,
-    secondaryColor,
-    fontFamily,
-    logoUrl,
-    bannerUrl,
-    heroHeadline,
-    heroSubheadline,
-    aboutText,
-    ctaText,
-    enabledSections,
-    orderedSections,
-    sendPreviewUpdate,
-  ]);
-
-  // Save handler
-  const handleSaveChanges = async () => {
-    if (!store) return;
-    setIsSaving(true);
-    setSaveError(null);
-    setSaveSuccess(false);
+  // Publish / Unpublish status handler
+  const handlePublishStore = async (targetStatus: "Published" | "Draft" = "Published") => {
+    if (!store || isPublishing) return;
+    setIsPublishing(true);
+    setPublishError(null);
+    setPublishSuccess(false);
 
     try {
-      const updates = {
-        name: storeName.trim(),
-        description: aboutText.trim(),
-        branding: {
-          primaryColor,
-          secondaryColor,
-          fontFamily,
-          logoUrl,
-          bannerUrl,
-          heroHeadline: heroHeadline.trim(),
-          heroSubheadline: heroSubheadline.trim(),
-          aboutText: aboutText.trim(),
-          ctaText: ctaText.trim(),
-        },
-        enabledSections,
-        orderedSections,
-      };
-
       const res = await fetch(`/api/stores/${store.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
+        body: JSON.stringify({ status: targetStatus }),
       });
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.error || "Failed to persist storefront changes.");
+        throw new Error(errData.error || `Failed to transition store status to ${targetStatus}`);
       }
 
       const updatedData = await res.json();
       setStore(updatedData.store);
-      setHasUnsavedChanges(false);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      setPublishSuccess(true);
+      setTimeout(() => setPublishSuccess(false), 3000);
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : "Error saving changes.");
+      setPublishError(err instanceof Error ? err.message : "Error updating store status.");
     } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleRefreshIframe = () => {
-    setIsIframeLoading(true);
-    setIsIframeReady(false);
-    setIframeKey(Date.now());
-  };
-
-  const toggleSection = (sectionId: string) => {
-    setEnabledSections((prev) =>
-      prev.includes(sectionId)
-        ? prev.filter((s) => s !== sectionId)
-        : [...prev, sectionId]
-    );
-  };
-
-  const moveSection = (index: number, direction: "up" | "down") => {
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= orderedSections.length) return;
-    const updated = [...orderedSections];
-    const [moved] = updated.splice(index, 1);
-    updated.splice(targetIndex, 0, moved);
-    setOrderedSections(updated);
-  };
-
-  const handleDragStart = (index: number) => {
-    setDraggedSectionIndex(index);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (index: number) => {
-    if (draggedSectionIndex === null || draggedSectionIndex === index) return;
-    const updated = [...orderedSections];
-    const [moved] = updated.splice(draggedSectionIndex, 1);
-    updated.splice(index, 0, moved);
-    setOrderedSections(updated);
-    setDraggedSectionIndex(null);
-  };
-
-  const getContainerWidth = () => {
-    switch (preset) {
-      case "mobile":
-        return "max-w-[390px] h-[780px]";
-      case "tablet":
-        return "max-w-[800px] h-[900px]";
-      case "desktop":
-      default:
-        return "w-full h-[850px]";
+      setIsPublishing(false);
     }
   };
 
@@ -395,7 +94,7 @@ export default function StoreCustomizerPreviewPage() {
     return (
       <div className="py-24 text-center text-xs text-[#66736C]">
         <div className="animate-spin h-6 w-6 border-2 border-[#176B4D] border-t-transparent rounded-full mx-auto mb-3" />
-        <span>Loading storefront visual customizer...</span>
+        <span>Loading advanced visual editor...</span>
       </div>
     );
   }
@@ -406,7 +105,7 @@ export default function StoreCustomizerPreviewPage() {
         <div className="h-12 w-12 rounded-xl bg-[#FDEAEA] text-[#C43D3D] flex items-center justify-center mx-auto">
           <AlertCircle className="h-6 w-6" />
         </div>
-        <h2 className="text-base font-semibold text-[#18231E]">Storefront Preview Unavailable</h2>
+        <h2 className="text-base font-semibold text-[#18231E]">Storefront Editor Unavailable</h2>
         <p className="text-xs text-[#66736C] max-w-sm mx-auto">
           {error || "The specified store configuration could not be resolved from the database."}
         </p>
@@ -419,54 +118,42 @@ export default function StoreCustomizerPreviewPage() {
     );
   }
 
-  const storefrontUrl = `/store/${store.slug}`;
-
   return (
-    <div className="space-y-4">
-      {/* Top Action & Navigation Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-[#E4E9E5] shadow-xs">
-        <div className="flex items-center gap-3">
-          <Link href="/stores">
-            <Button variant="ghost" size="sm" leftIcon={<ArrowLeft className="h-4 w-4" />}>
-              Stores
-            </Button>
-          </Link>
-          <div className="h-4 w-px bg-[#E4E9E5]" />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-[#18231E]">{store.name}</h1>
-              <StatusBadge status={store.status} size="sm" />
-              {hasUnsavedChanges && (
-                <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200 font-semibold animate-pulse">
-                  Unsaved Changes
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-[#66736C]">
-              Client: <span className="font-medium text-[#18231E]">{store.clientName}</span> • Template:{" "}
-              <span className="font-medium text-[#18231E]">{store.templateName}</span>
-            </p>
-          </div>
-        </div>
-
+    <div className="space-y-3">
+      {/* Top Utility Bar for Store Extras (Schedule, Leads, Present, Deliver, Share) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
-          {saveError && (
-            <span className="text-xs text-red-600 font-medium mr-2">{saveError}</span>
+          {store.websiteType === "appointments" && (
+            <Link href={`/stores/${store.id}/schedule`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-emerald-700 border-emerald-200 hover:bg-emerald-50 h-8 text-xs"
+                leftIcon={<CalendarIcon className="h-3.5 w-3.5 text-emerald-600" />}
+              >
+                Schedule &amp; Bookings
+              </Button>
+            </Link>
           )}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            leftIcon={isSidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          >
-            {isSidebarOpen ? "Hide Controls" : "Edit Storefront"}
-          </Button>
+          {store.websiteType === "lead_gen" && (
+            <Link href={`/stores/${store.id}/leads`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-emerald-700 border-emerald-200 hover:bg-emerald-50 h-8 text-xs"
+                leftIcon={<Users className="h-3.5 w-3.5 text-emerald-600" />}
+              >
+                Lead CRM
+              </Button>
+            </Link>
+          )}
 
           <Link href={`/stores/${store.id}/present`}>
             <Button
               variant="outline"
               size="sm"
+              className="h-8 text-xs text-stone-700 border-stone-200"
               leftIcon={<Presentation className="h-3.5 w-3.5 text-[#176B4D]" />}
             >
               Present
@@ -477,6 +164,7 @@ export default function StoreCustomizerPreviewPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsDeliveryModalOpen(true)}
+            className="h-8 text-xs text-stone-700 border-stone-200"
             leftIcon={<Package className="h-3.5 w-3.5 text-[#176B4D]" />}
           >
             Export &amp; Deliver
@@ -486,32 +174,18 @@ export default function StoreCustomizerPreviewPage() {
             variant="outline"
             size="sm"
             onClick={() => setShareModalOpen(true)}
+            className="h-8 text-xs text-stone-700 border-stone-200"
             leftIcon={<Share2 className="h-3.5 w-3.5 text-[#176B4D]" />}
           >
             Share with Client
           </Button>
-
-          <a href={storefrontUrl} target="_blank" rel="noopener noreferrer">
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<ExternalLink className="h-3.5 w-3.5" />}
-            >
-              Open Tab
-            </Button>
-          </a>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleSaveChanges}
-            isLoading={isSaving}
-            disabled={!hasUnsavedChanges || isSaving}
-            leftIcon={saveSuccess ? <Check className="h-3.5 w-3.5 text-white" /> : <Save className="h-3.5 w-3.5" />}
-          >
-            {saveSuccess ? "Saved!" : "Save Changes"}
-          </Button>
         </div>
+
+        {publishError && (
+          <span className="text-xs text-red-600 font-medium px-2 py-1 bg-red-50 rounded-md border border-red-200">
+            {publishError}
+          </span>
+        )}
       </div>
 
       {/* Share Modal Dialog */}
@@ -530,774 +204,14 @@ export default function StoreCustomizerPreviewPage() {
         onClose={() => setIsDeliveryModalOpen(false)}
       />
 
-      {/* Main Workspace: Left Customizer Panel + Central Canvas */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        {/* LEFT CUSTOMIZER DRAWER */}
-        {isSidebarOpen && (
-          <div className="lg:col-span-4 bg-white rounded-xl border border-[#E4E9E5] shadow-xs flex flex-col h-[850px] overflow-hidden">
-            {/* Drawer Tab Headers */}
-            <div className="p-2 border-b border-[#E4E9E5] bg-[#FAF9F6] flex gap-1">
-              <button
-                type="button"
-                onClick={() => setActiveTab("branding")}
-                className={cn(
-                  "flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer",
-                  activeTab === "branding"
-                    ? "bg-white text-[#176B4D] shadow-xs border border-[#E4E9E5]"
-                    : "text-[#66736C] hover:text-[#18231E]"
-                )}
-              >
-                <Palette className="h-3.5 w-3.5" />
-                <span>Branding</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("content")}
-                className={cn(
-                  "flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer",
-                  activeTab === "content"
-                    ? "bg-white text-[#176B4D] shadow-xs border border-[#E4E9E5]"
-                    : "text-[#66736C] hover:text-[#18231E]"
-                )}
-              >
-                <Type className="h-3.5 w-3.5" />
-                <span>Content</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("sections")}
-                className={cn(
-                  "flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer",
-                  activeTab === "sections"
-                    ? "bg-white text-[#176B4D] shadow-xs border border-[#E4E9E5]"
-                    : "text-[#66736C] hover:text-[#18231E]"
-                )}
-              >
-                <Layout className="h-3.5 w-3.5" />
-                <span>Sections</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("feedback")}
-                className={cn(
-                  "flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer relative",
-                  activeTab === "feedback"
-                    ? "bg-white text-[#176B4D] shadow-xs border border-[#E4E9E5]"
-                    : "text-[#66736C] hover:text-[#18231E]"
-                )}
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span>Review</span>
-                {feedbackList.length > 0 && (
-                  <span className="bg-[#176B4D] text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold ml-1">
-                    {feedbackList.length}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* Drawer Tab Body */}
-            <div className="p-4 flex-1 overflow-y-auto space-y-5 text-xs">
-              {/* TAB 1: BRANDING */}
-              {activeTab === "branding" && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="font-semibold text-[#18231E] block mb-1">
-                      Store Name
-                    </label>
-                    <input
-                      type="text"
-                      value={storeName}
-                      onChange={(e) => setStoreName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-[#CCD5CE] focus:border-[#176B4D] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-semibold text-[#18231E] block mb-1">
-                        Primary Accent
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={primaryColor}
-                          onChange={(e) => setPrimaryColor(e.target.value)}
-                          className="h-8 w-8 rounded-md border border-[#CCD5CE] cursor-pointer p-0.5 bg-white"
-                        />
-                        <input
-                          type="text"
-                          value={primaryColor}
-                          onChange={(e) => setPrimaryColor(e.target.value)}
-                          className="w-full px-2 py-1 rounded-md border border-[#CCD5CE] text-xs font-mono uppercase"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="font-semibold text-[#18231E] block mb-1">
-                        Secondary Theme
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={secondaryColor}
-                          onChange={(e) => setSecondaryColor(e.target.value)}
-                          className="h-8 w-8 rounded-md border border-[#CCD5CE] cursor-pointer p-0.5 bg-white"
-                        />
-                        <input
-                          type="text"
-                          value={secondaryColor}
-                          onChange={(e) => setSecondaryColor(e.target.value)}
-                          className="w-full px-2 py-1 rounded-md border border-[#CCD5CE] text-xs font-mono uppercase"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-[#18231E] block mb-1">
-                      Typography Pairing
-                    </label>
-                    <select
-                      value={fontFamily}
-                      onChange={(e) => setFontFamily(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-[#CCD5CE] focus:border-[#176B4D] focus:outline-hidden bg-white cursor-pointer"
-                    >
-                      <option value="Inter, sans-serif">Modern Clean (Inter)</option>
-                      <option value="Geist, sans-serif">Technical Sans (Geist)</option>
-                      <option value="Georgia, serif">Editorial Elegance (Georgia)</option>
-                      <option value="'Playfair Display', serif">Luxury Haute (Playfair)</option>
-                      <option value="'Plus Jakarta Sans', sans-serif">Vibrant Tech (Jakarta)</option>
-                    </select>
-                  </div>
-
-                  {/* Logo Configuration with Direct Upload */}
-                  <div>
-                    <label className="font-semibold text-[#18231E] block mb-1">
-                      Store Logo
-                    </label>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF9F6] border border-[#CCD5CE] rounded-lg cursor-pointer hover:bg-[#F0F4F1] transition-colors text-xs font-semibold text-[#18231E]">
-                          {isUploadingLogo ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#176B4D]" />
-                          ) : (
-                            <Upload className="h-3.5 w-3.5 text-[#176B4D]" />
-                          )}
-                          <span>{isUploadingLogo ? "Uploading..." : "Upload Logo"}</span>
-                          <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                            className="hidden"
-                            disabled={isUploadingLogo}
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              setIsUploadingLogo(true);
-                              setUploadError(null);
-                              try {
-                                const formData = new FormData();
-                                formData.append("file", file);
-                                formData.append("purpose", "logo");
-                                const res = await fetch(`/api/stores/${store.id}/media`, {
-                                  method: "POST",
-                                  body: formData,
-                                });
-                                if (!res.ok) {
-                                  const errData = await res.json();
-                                  throw new Error(errData.error || "Failed to upload logo.");
-                                }
-                                const data = await res.json();
-                                setLogoUrl(data.asset.url);
-                              } catch (err: unknown) {
-                                setUploadError(err instanceof Error ? err.message : "Upload error");
-                              } finally {
-                                setIsUploadingLogo(false);
-                              }
-                            }}
-                          />
-                        </label>
-
-                        <input
-                          type="url"
-                          placeholder="or paste image URL..."
-                          value={logoUrl}
-                          onChange={(e) => setLogoUrl(e.target.value)}
-                          className="flex-1 px-2.5 py-1.5 rounded-lg border border-[#CCD5CE] focus:border-[#176B4D] focus:outline-hidden text-xs"
-                        />
-                      </div>
-                      {logoUrl && (
-                        <div className="p-2 bg-[#FAF9F6] border border-[#E4E9E5] rounded-lg flex items-center justify-between">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={logoUrl} alt="Logo preview" className="h-6 max-w-[120px] object-contain" />
-                          <button
-                            type="button"
-                            onClick={() => setLogoUrl("")}
-                            className="text-[10px] text-red-600 hover:underline"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      )}
-                      <p className="text-[10px] text-[#66736C]">
-                        Supported: PNG, SVG, JPG, WEBP (Max 5MB).
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Hero Banner Configuration with Direct Upload */}
-                  <div>
-                    <label className="font-semibold text-[#18231E] block mb-1">
-                      Hero Banner Image
-                    </label>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF9F6] border border-[#CCD5CE] rounded-lg cursor-pointer hover:bg-[#F0F4F1] transition-colors text-xs font-semibold text-[#18231E]">
-                          {isUploadingBanner ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#176B4D]" />
-                          ) : (
-                            <Upload className="h-3.5 w-3.5 text-[#176B4D]" />
-                          )}
-                          <span>{isUploadingBanner ? "Uploading..." : "Upload Banner"}</span>
-                          <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                            className="hidden"
-                            disabled={isUploadingBanner}
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              setIsUploadingBanner(true);
-                              setUploadError(null);
-                              try {
-                                const formData = new FormData();
-                                formData.append("file", file);
-                                formData.append("purpose", "banner");
-                                const res = await fetch(`/api/stores/${store.id}/media`, {
-                                  method: "POST",
-                                  body: formData,
-                                });
-                                if (!res.ok) {
-                                  const errData = await res.json();
-                                  throw new Error(errData.error || "Failed to upload banner.");
-                                }
-                                const data = await res.json();
-                                setBannerUrl(data.asset.url);
-                              } catch (err: unknown) {
-                                setUploadError(err instanceof Error ? err.message : "Upload error");
-                              } finally {
-                                setIsUploadingBanner(false);
-                              }
-                            }}
-                          />
-                        </label>
-
-                        <input
-                          type="url"
-                          placeholder="or paste banner URL..."
-                          value={bannerUrl}
-                          onChange={(e) => setBannerUrl(e.target.value)}
-                          className="flex-1 px-2.5 py-1.5 rounded-lg border border-[#CCD5CE] focus:border-[#176B4D] focus:outline-hidden text-xs"
-                        />
-                      </div>
-                      {bannerUrl && (
-                        <div className="p-2 bg-[#FAF9F6] border border-[#E4E9E5] rounded-lg flex items-center justify-between">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={bannerUrl} alt="Banner preview" className="h-8 max-w-[120px] object-cover rounded" />
-                          <button
-                            type="button"
-                            onClick={() => setBannerUrl("")}
-                            className="text-[10px] text-red-600 hover:underline"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      )}
-                      {uploadError && (
-                        <p className="text-[10px] text-red-600 font-medium">{uploadError}</p>
-                      )}
-                      <p className="text-[10px] text-[#66736C]">
-                        16:9 banner showcased in the storefront hero section.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: CONTENT */}
-              {activeTab === "content" && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="font-semibold text-[#18231E] block mb-1">
-                      Hero Headline
-                    </label>
-                    <input
-                      type="text"
-                      value={heroHeadline}
-                      onChange={(e) => setHeroHeadline(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-[#CCD5CE] focus:border-[#176B4D] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-[#18231E] block mb-1">
-                      Hero Subheadline
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={heroSubheadline}
-                      onChange={(e) => setHeroSubheadline(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-[#CCD5CE] focus:border-[#176B4D] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-[#18231E] block mb-1">
-                      Call to Action Button Text
-                    </label>
-                    <input
-                      type="text"
-                      value={ctaText}
-                      onChange={(e) => setCtaText(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-[#CCD5CE] focus:border-[#176B4D] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-semibold text-[#18231E] block mb-1">
-                      Brand Story / About
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={aboutText}
-                      onChange={(e) => setAboutText(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-[#CCD5CE] focus:border-[#176B4D] focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: SECTIONS (Advanced Drag-and-Drop Section Builder) */}
-              {activeTab === "sections" && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between pb-1 border-b border-[#E4E9E5]">
-                    <div>
-                      <h4 className="font-bold text-[#18231E]">Section Layout &amp; Reorder</h4>
-                      <p className="text-[11px] text-[#66736C]">
-                        Drag handles or use arrows to change sequence. Canvas updates in real time.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOrderedSections([
-                          "hero",
-                          "featured_products",
-                          "about",
-                          "newsletter",
-                          "footer",
-                        ])
-                      }
-                      className="text-[10px] text-[#176B4D] hover:underline font-semibold cursor-pointer shrink-0 ml-2"
-                    >
-                      Reset Order
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    {orderedSections.map((secId, index) => {
-                      const metaMap: Record<string, { label: string; desc: string }> = {
-                        hero: {
-                          label: "Hero Banner & Pitch Message",
-                          desc: "Top promotional banner, headlines & call to action",
-                        },
-                        featured_products: {
-                          label: "Featured Product Catalog",
-                          desc: "Interactive catalog grid, price tags & quick add",
-                        },
-                        about: {
-                          label: "Brand Story & Heritage",
-                          desc: "Tailored brand narrative for prospective client",
-                        },
-                        newsletter: {
-                          label: "Newsletter Subscription",
-                          desc: "Audience capture and VIP email newsletter sign-up",
-                        },
-                        footer: {
-                          label: "Storefront Legal & Footer",
-                          desc: "Storefront copyright & GridRetail engine badge",
-                        },
-                      };
-
-                      const meta = metaMap[secId] || {
-                        label: secId,
-                        desc: "Storefront section block",
-                      };
-                      const isChecked = enabledSections.includes(secId);
-                      const isDragging = draggedSectionIndex === index;
-
-                      return (
-                        <div
-                          key={secId}
-                          draggable
-                          onDragStart={() => handleDragStart(index)}
-                          onDragOver={handleDragOver}
-                          onDrop={() => handleDrop(index)}
-                          onDragEnd={() => setDraggedSectionIndex(null)}
-                          className={cn(
-                            "flex items-center gap-2 p-2.5 rounded-xl border transition-all select-none",
-                            isDragging && "opacity-40 border-dashed border-[#176B4D] bg-[#E2F5E9]",
-                            isChecked
-                              ? "bg-white border-[#CCD5CE] shadow-2xs hover:border-[#176B4D]"
-                              : "bg-[#FAF9F6] border-[#E4E9E5] text-[#8F9D95]"
-                          )}
-                        >
-                          {/* Drag Handle */}
-                          <div
-                            className="cursor-grab active:cursor-grabbing text-stone-400 hover:text-stone-700 p-0.5"
-                            title="Drag to reorder section"
-                          >
-                            <GripVertical className="h-4 w-4" />
-                          </div>
-
-                          {/* Order Number Badge */}
-                          <span
-                            className={cn(
-                              "w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 border",
-                              isChecked
-                                ? "bg-[#E2F5E9] text-[#176B4D] border-[#176B4D]/30"
-                                : "bg-stone-100 text-stone-400 border-stone-200"
-                            )}
-                          >
-                            {index + 1}
-                          </span>
-
-                          {/* Section Meta Details */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span
-                                className={cn(
-                                  "font-bold text-xs truncate",
-                                  isChecked ? "text-[#18231E]" : "text-[#8F9D95]"
-                                )}
-                              >
-                                {meta.label}
-                              </span>
-                              {!isChecked && (
-                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-200 text-stone-600 font-semibold uppercase">
-                                  Hidden
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[10px] text-[#66736C] truncate">{meta.desc}</p>
-                          </div>
-
-                          {/* Accessible Move Up / Down Buttons */}
-                          <div className="flex items-center gap-0.5">
-                            <button
-                              type="button"
-                              disabled={index === 0}
-                              onClick={() => moveSection(index, "up")}
-                              className="p-1 rounded hover:bg-stone-200/60 disabled:opacity-20 disabled:pointer-events-none transition-colors text-stone-600"
-                              title="Move section up"
-                              aria-label={`Move ${meta.label} up`}
-                            >
-                              <ChevronUp className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              disabled={index === orderedSections.length - 1}
-                              onClick={() => moveSection(index, "down")}
-                              className="p-1 rounded hover:bg-stone-200/60 disabled:opacity-20 disabled:pointer-events-none transition-colors text-stone-600"
-                              title="Move section down"
-                              aria-label={`Move ${meta.label} down`}
-                            >
-                              <ChevronDown className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-
-                          {/* Visibility Checkbox Toggle */}
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => toggleSection(secId)}
-                            className="h-4 w-4 text-[#176B4D] rounded-sm focus:ring-[#176B4D] accent-[#176B4D] cursor-pointer ml-1"
-                            title={isChecked ? "Hide section" : "Enable section"}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 4: REVIEW & FEEDBACK */}
-              {activeTab === "feedback" && (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold text-[#18231E] block mb-1">
-                      Client Review Status
-                    </h4>
-                    <div className="flex items-center gap-2 p-2.5 bg-[#FAF9F6] rounded-lg border border-[#E4E9E5]">
-                      <StatusBadge status={store.status} size="sm" />
-                      <span className="text-[11px] text-[#66736C]">
-                        {store.status === "Approved"
-                          ? "Client has approved this storefront proposal."
-                          : store.status === "Changes Requested"
-                          ? "Client has requested updates."
-                          : "Awaiting client review response."}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Reply Form */}
-                  <div className="p-3 bg-[#FAF9F6] rounded-lg border border-[#E4E9E5] space-y-2">
-                    <label className="font-semibold text-[#18231E] block text-[11px]">
-                      Post Response to Client Thread
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={replyMessage}
-                      onChange={(e) => setReplyMessage(e.target.value)}
-                      placeholder="Type response notes for client or team..."
-                      className="w-full px-2.5 py-1.5 rounded-md border border-[#CCD5CE] focus:border-[#176B4D] focus:outline-hidden text-xs bg-white"
-                    />
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      disabled={!replyMessage.trim() || isPostingReply}
-                      isLoading={isPostingReply}
-                      onClick={async () => {
-                        if (!replyMessage.trim()) return;
-                        setIsPostingReply(true);
-                        try {
-                          const res = await fetch(`/api/stores/${store.id}/feedback`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ message: replyMessage }),
-                          });
-                          if (res.ok) {
-                            const data = await res.json();
-                            setFeedbackList((prev) => [data.feedback, ...prev]);
-                            setReplyMessage("");
-                          }
-                        } finally {
-                          setIsPostingReply(false);
-                        }
-                      }}
-                      leftIcon={<Send className="h-3 w-3" />}
-                    >
-                      Post Response
-                    </Button>
-                  </div>
-
-                  {/* Feedback Stream */}
-                  <div className="space-y-2">
-                    <h5 className="font-semibold text-[#18231E] text-[11px]">
-                      Conversation Thread ({feedbackList.length})
-                    </h5>
-                    {feedbackList.length === 0 ? (
-                      <p className="text-[#66736C] text-[10px] text-center py-4 bg-[#FAF9F6] rounded-lg border border-dashed border-[#CCD5CE]">
-                        No client feedback or approval notes received yet.
-                      </p>
-                    ) : (
-                      <div className="space-y-2 max-h-72 overflow-y-auto">
-                        {feedbackList.map((item) => {
-                          const isClient = item.authorType === "client";
-                          const isApproval = item.type === "approval";
-                          const isChanges = item.type === "changes_requested";
-
-                          return (
-                            <div
-                              key={item.id}
-                              className={cn(
-                                "p-2.5 rounded-lg border text-[11px] space-y-1",
-                                isApproval
-                                  ? "bg-emerald-50/70 border-emerald-300"
-                                  : isChanges
-                                  ? "bg-amber-50/70 border-amber-300"
-                                  : isClient
-                                  ? "bg-white border-[#E4E9E5]"
-                                  : "bg-[#F0F4F1] border-[#CCD5CE]"
-                              )}
-                            >
-                              <div className="flex items-center justify-between text-[10px]">
-                                <span className="font-semibold text-[#18231E]">
-                                  {item.authorName}{" "}
-                                  <span className="font-normal text-[#66736C]">
-                                    ({isClient ? "Client" : "Team"})
-                                  </span>
-                                </span>
-                                <span className="text-[#909D96]">
-                                  {new Date(item.createdAt).toLocaleDateString([], {
-                                    month: "short",
-                                    day: "numeric",
-                                  })}
-                                </span>
-                              </div>
-
-                              {isApproval && (
-                                <div className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                                  <CheckCircle2 className="h-3 w-3" />
-                                  <span>Proposal Approved</span>
-                                </div>
-                              )}
-
-                              {isChanges && (
-                                <div className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
-                                  <AlertCircle className="h-3 w-3" />
-                                  <span>Changes Requested</span>
-                                </div>
-                              )}
-
-                              <p className="text-stone-800 whitespace-pre-wrap leading-relaxed">
-                                {item.message}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Drawer Footer Status */}
-            <div className="p-3 border-t border-[#E4E9E5] bg-[#FAF9F6] text-[10px] text-[#66736C] flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <span
-                  className={cn(
-                    "h-2 w-2 rounded-full",
-                    isIframeReady ? "bg-emerald-500" : "bg-amber-500 animate-ping"
-                  )}
-                />
-                {isIframeReady ? "Live Canvas Connected" : "Connecting..."}
-              </span>
-              {lastAckTime && (
-                <span>
-                  Synced {new Date(lastAckTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* CENTRAL PREVIEW CANVAS */}
-        <div className={cn("space-y-4", isSidebarOpen ? "lg:col-span-8" : "lg:col-span-12")}>
-          {/* Canvas Controls Bar */}
-          <div className="bg-white p-2.5 rounded-xl border border-[#E4E9E5] flex items-center justify-between shadow-2xs">
-            {/* Viewport Presets */}
-            <div className="flex items-center gap-1 bg-[#F0F4F1] p-1 rounded-lg">
-              <button
-                type="button"
-                onClick={() => setPreset("desktop")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
-                  preset === "desktop"
-                    ? "bg-white text-[#176B4D] shadow-xs"
-                    : "text-[#66736C] hover:text-[#18231E]"
-                )}
-              >
-                <Monitor className="h-3.5 w-3.5" />
-                <span>Desktop</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPreset("tablet")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
-                  preset === "tablet"
-                    ? "bg-white text-[#176B4D] shadow-xs"
-                    : "text-[#66736C] hover:text-[#18231E]"
-                )}
-              >
-                <Tablet className="h-3.5 w-3.5" />
-                <span>Tablet (768px)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPreset("mobile")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
-                  preset === "mobile"
-                    ? "bg-white text-[#176B4D] shadow-xs"
-                    : "text-[#66736C] hover:text-[#18231E]"
-                )}
-              >
-                <Smartphone className="h-3.5 w-3.5" />
-                <span>Mobile (375px)</span>
-              </button>
-            </div>
-
-            {/* Canvas Actions */}
-            <div className="flex items-center gap-2">
-              <span className="hidden sm:inline font-mono text-xs text-[#66736C]">
-                {preset === "desktop" ? "100% Fluid Width" : preset === "tablet" ? "768 × 1024" : "375 × 812"}
-              </span>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefreshIframe}
-                leftIcon={<RefreshCw className={cn("h-3.5 w-3.5", isIframeLoading && "animate-spin")} />}
-              >
-                Refresh Canvas
-              </Button>
-            </div>
-          </div>
-
-          {/* Iframe Viewport Sandbox Canvas */}
-          <div className="bg-[#FAF9F6] p-4 sm:p-6 rounded-2xl border border-[#E4E9E5] min-h-[850px] flex justify-center items-start overflow-x-auto shadow-inner">
-            <div
-              className={cn(
-                "transition-all duration-300 relative bg-white rounded-xl overflow-hidden shadow-2xl border border-[#CCD5CE]",
-                getContainerWidth()
-              )}
-            >
-              {/* Virtual Browser Top Header Chrome for tablet & mobile */}
-              {preset !== "desktop" && (
-                <div className="bg-[#E4E9E5] px-4 py-2 flex items-center justify-between border-b border-[#CCD5CE] text-[10px] text-[#4F5D56] font-mono select-none">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#C43D3D]" />
-                    <span className="w-2 h-2 rounded-full bg-[#B7791F]" />
-                    <span className="w-2 h-2 rounded-full bg-[#16804A]" />
-                  </div>
-                  <span className="truncate max-w-[180px] bg-white px-2 py-0.5 rounded text-[10px]">
-                    gridretail.demo/store/{store.slug}
-                  </span>
-                  <span className="text-[10px] font-sans">100%</span>
-                </div>
-              )}
-
-              {isIframeLoading && (
-                <div className="absolute inset-0 bg-white/70 backdrop-blur-2xs flex items-center justify-center z-10">
-                  <div className="flex flex-col items-center gap-2 text-xs text-[#176B4D]">
-                    <div className="animate-spin h-5 w-5 border-2 border-[#176B4D] border-t-transparent rounded-full" />
-                    <span>Connecting live storefront renderer...</span>
-                  </div>
-                </div>
-              )}
-
-              <iframe
-                ref={iframeRef}
-                key={iframeKey}
-                src={storefrontUrl}
-                title={`${store.name} Preview`}
-                className="w-full h-full border-0"
-                sandbox="allow-scripts allow-same-origin allow-forms"
-                onLoad={() => setIsIframeLoading(false)}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Visual Editor Workspace */}
+      <VisualEditorWorkspace
+        initialStore={store}
+        onStoreUpdated={(updated) => setStore(updated)}
+        onPublishStore={handlePublishStore}
+        isPublishing={isPublishing}
+        publishSuccess={publishSuccess}
+      />
     </div>
   );
 }

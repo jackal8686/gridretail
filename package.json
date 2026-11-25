@@ -8,8 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit",
-    "test": "tsx --test tests/**/*.test.ts",
+    "test": "tsx --test --test-concurrency=1 \"tests/*.test.ts\"",
     "seed": "tsx src/lib/db/seed.ts",
+    "sync-indexes": "tsx src/lib/db/sync-indexes.ts",
+    "clean-artifacts": "tsx src/lib/storage/clean-artifacts.ts",
     "bootstrap-admin": "tsx src/lib/db/bootstrap-admin.ts"
   },
   "dependencies": {

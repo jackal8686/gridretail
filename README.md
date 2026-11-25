@@ -1,117 +1,62 @@
-# GridRetail — Phase 4: Delivery Engine, Email Notifications, Drag-and-Drop Builder & Client Presentation Mode
+# GridRetail — Multi-Tenant Website Generation, Customizer & Commerce Platform
 
-> **Internal E-Commerce Demo Generation & Delivery Platform**  
-> Enables account teams and retail solution architects to configure tailored demo storefronts, pitch live to clients, reorder layout sections dynamically, and export self-contained production delivery bundles within minutes.
+> **Enterprise Website Generator for E-Commerce, Appointment Scheduling & Lead Generation**  
+> Enables account teams and retail solution architects to configure tailored demo storefronts, pitch live to clients, deploy instantaneous staging environments, collaborate via in-context anchored comments, and export verified production bundles.
 
 ---
 
 ## 1. Project Overview
 
-GridRetail is an enterprise platform developed to streamline retail client pitches. Rather than relying on generic slide decks or static screenshots, GridRetail generates interactive, industry-tailored demo storefronts featuring customized product catalogs, branded themes, and responsive layouts.
-
-### Phase 4 Capabilities Completed:
-- **E-Commerce Delivery & Export Engine:**
-  - Zero-dependency streaming PKZIP 2.0 compression engine (`ZipBuilder`) with CRC32 integrity checks.
-  - Production bundle compiler (`ExportService`) generating self-contained static storefront packages (`index.html`, `styles.css`, `store-manifest.json`, `products.json`, `README.md`).
-  - Persistent delivery history (`DeliveryRepository`) with SHA-256 cryptographic verification and direct streaming download endpoints (`/api/stores/[id]/deliveries/[deliveryId]/download`).
-  - Modal interface (`DeliveryModal`) integrated across the customizer and presentation decks.
-- **Email Notification Pipeline & Provider Abstraction:**
-  - Event-driven notifications with durable MongoDB repository logging (`NotificationRepository`).
-  - Pluggable email provider abstraction (`ConsoleMockEmailProvider` and `SmtpEmailProvider`) with automatic graceful fallback.
-  - Branded responsive HTML and plain-text templates with strict HTML sanitization against XSS.
-  - Automatic dispatch triggers wired into client review lifecycle (`feedback_submitted`, `changes_requested`, `proposal_approved`).
-- **Advanced Drag-and-Drop Storefront Builder:**
-  - Interactive section reordering in Tab 3 ("Sections") via HTML5 drag-and-drop handles and accessible keyboard controls (`ChevronUp`, `ChevronDown`).
-  - Schema extension (`orderedSections`) persisted to MongoDB via `PATCH /api/stores/[id]`.
-  - Live bidirectional `postMessage` synchronization updating the storefront canvas instantly without page reloads.
-- **Client Presentation Mode (`/stores/[id]/present`):**
-  - Distraction-free, full-viewport pitch walkthrough route for executive sales demonstrations.
-  - 6 guided presentation slides (Executive Vision, Curated Catalog, Brand Narrative, Audience Engagement, Live Interactive Simulator, Commercial Next Steps).
-  - Private presenter talking points drawer, viewport device toggles (Desktop, Tablet, Mobile), and keyboard shortcut navigation (`Right`, `Left`, `Space`, `N`, `Esc`).
-- **Comprehensive Automated Test Suite:**
-  - 63 automated unit tests passing across 12 test suites with zero failures.
+GridRetail is an enterprise platform developed to streamline client pitches across three primary business models:
+1. **E-Commerce Websites:** Modular section builders, catalog management, variant selection, cart drawer, and simulated checkout flow.
+2. **Appointment Scheduling Websites:** Services catalog, practitioner schedules, multi-timezone booking, atomic slot locking concurrency control, and cancellation workflows.
+3. **Lead Generation Websites:** Drag-and-drop visual form builder, conditional logic, multi-step progression, immutable versioning, CRM dashboard, and duplicate lead matching.
 
 ---
 
-## 2. Technology Stack
+## 2. Official Project Documentation Index (Phases 01 – 12)
+
+The project documentation is organized into **exactly 12 consolidated primary phase documents** located in the [`docs/`](file:///D:/grid/docs) directory:
+
+| Phase | Document | Description & Core Deliverables |
+| :---: | :--- | :--- |
+| **01** | [`PHASE_01_FOUNDATION_DESIGN_SYSTEM.md`](file:///D:/grid/docs/PHASE_01_FOUNDATION_DESIGN_SYSTEM.md) | Next.js 15 App Router scaffolding, design system tokens (`#176B4D` emerald, `#FAF9F6` canvas), reusable UI primitives, and 6 core dashboard routes. |
+| **02** | [`PHASE_02_DATABASE_AUTH_STORE_WIZARD.md`](file:///D:/grid/docs/PHASE_02_DATABASE_AUTH_STORE_WIZARD.md) | Native MongoDB connection pooling & in-memory fallback, Auth.js credentials authentication, 5-step store creation wizard, dynamic storefront renderer, and responsive device preview sandbox. |
+| **03** | [`PHASE_03_CUSTOMIZER_SHARING_MEDIA.md`](file:///D:/grid/docs/PHASE_03_CUSTOMIZER_SHARING_MEDIA.md) | 3-panel visual customizer with bidirectional `postMessage` synchronization, secure tokenized client preview links (SHA-256), client feedback state machine, and cloud media storage. |
+| **04** | [`PHASE_04_EXPORT_DELIVERY_PRESENTATION.md`](file:///D:/grid/docs/PHASE_04_EXPORT_DELIVERY_PRESENTATION.md) | Zero-dependency streaming PKZIP 2.0 export engine, transactional email notifications with provider abstraction, drag-and-drop section builder, and fullscreen client presentation mode. |
+| **05** | [`PHASE_05_ANALYTICS_DEPLOYMENTS_COLLABORATION.md`](file:///D:/grid/docs/PHASE_05_ANALYTICS_DEPLOYMENTS_COLLABORATION.md) | Cross-store conversion analytics & proposal funnel, one-click cloud staging preview deployments (Cloudflare/Vercel/S3), in-context anchored comments, and 4-tier enterprise RBAC. |
+| **06** | [`PHASE_06_PRODUCTION_READINESS_SECURITY.md`](file:///D:/grid/docs/PHASE_06_PRODUCTION_READINESS_SECURITY.md) | Production readiness, security vulnerability remediation (SEC-01 to SEC-07: path traversal, anti-spoofing, SVG sanitization, stored XSS, iframe sandbox), operational structured logging, and 7 E2E user journeys. |
+| **07** | [`PHASE_07_STORAGE_RETENTION_PERFORMANCE.md`](file:///D:/grid/docs/PHASE_07_STORAGE_RETENTION_PERFORMANCE.md) | Production database persistence guard (`DatabaseUnavailableError`), automated index synchronization (`npm run sync-indexes`), S3 signed URLs, artifact retention scanner, and system-wide latency optimizations. |
+| **08** | [`PHASE_08_SUBDOMAIN_HOSTNAME_ROUTING.md`](file:///D:/grid/docs/PHASE_08_SUBDOMAIN_HOSTNAME_ROUTING.md) | RFC 6761 local subdomain routing (`{slug}.localhost:3000`), Next.js middleware rewrites, BSON serialization normalization, Auth.js session fetch fixes, and store publishing lifecycle. |
+| **09** | [`PHASE_09_TEMPLATES_THEMES_CATALOG.md`](file:///D:/grid/docs/PHASE_09_TEMPLATES_THEMES_CATALOG.md) | Category-wise product management, custom product photography upload with magic-byte validation, 8 architectural design templates, 12 color themes (96 combinations), and responsive UI polish. |
+| **10** | [`PHASE_10_SECTION_SYSTEM_ECOMMERCE.md`](file:///D:/grid/docs/PHASE_10_SECTION_SYSTEM_ECOMMERCE.md) | Modular section registry (29 section types across 5 categories), Product Detail Pages (PDP), collection browsing, composite cart keys, universal INR (₹) formatting, and simulated checkout flow (Subphases 10A & 10B consolidated). |
+| **11** | [`PHASE_11_APPOINTMENT_SCHEDULING_SYSTEM.md`](file:///D:/grid/docs/PHASE_11_APPOINTMENT_SCHEDULING_SYSTEM.md) | Professional appointment scheduling system, practitioner profiles, dual-layer slot locking concurrency control (in-memory mutex + MongoDB unique index), reservation leases, cancellation tokens, and 8-template customizer layout engine parity. |
+| **12** | [`PHASE_12_LEAD_GENERATION_FORM_BUILDER_CRM.md`](file:///D:/grid/docs/PHASE_12_LEAD_GENERATION_FORM_BUILDER_CRM.md) | Lead-generation website generator, 5 starter form templates, drag-and-drop form builder (9 field types & conditional logic), immutable versioning, lead CRM dashboard (Kanban/Table), duplicate matching, formula injection defense, and first-party analytics. |
+
+---
+
+## 3. Technology Stack
 
 - **Framework:** Next.js 15.5.27 (App Router, Server & Client Components)
-- **Language:** TypeScript 5 (Strict typing, no `any`)
+- **Language:** TypeScript 5 (Strict typing, zero `any`)
 - **Styling:** Tailwind CSS v4 with custom design tokens in `@theme` and `src/config/theme.ts`
-- **Database:** MongoDB 7.x (Native driver, connection pooling, graceful in-memory fallback)
+- **Database:** MongoDB 7.x / 9.x (Native driver, connection pooling, graceful in-memory dev fallback, production persistence guard)
 - **Authentication:** Auth.js (`next-auth@5.0.0-beta.32`) with `bcryptjs` credential hashing & JWT sessions
-- **Storage:** Pluggable storage provider (Local file staging & S3/R2 compatible adapter)
+- **Storage:** Pluggable storage provider (Local file staging & S3/R2 compatible adapter with presigned HMAC URLs)
+- **Email:** Pluggable email notification provider (Console mock & production SMTP)
+- **Deployments:** Staging deployment engine supporting simulated edge, Cloudflare Pages, Vercel, and AWS S3
 - **Iconography:** Lucide React (`lucide-react`)
 - **Fonts:** Geist Sans & Geist Mono via `next/font`
-- **Test Runner:** Node.js native test runner via `tsx`
-
----
-
-## 3. Directory Structure
-
-```text
-gridretail/
-├── public/                     # Static assets, icons, and uploaded media
-├── src/
-│   ├── app/                    # Next.js App Router routes
-│   │   ├── layout.tsx          # Root layout with SessionWrapper & AppShell
-│   │   ├── page.tsx            # Entry point (redirects to /dashboard)
-│   │   ├── login/page.tsx      # Corporate authentication portal
-│   │   ├── dashboard/page.tsx  # Workspace overview, KPIs & recent activity
-│   │   ├── stores/             # Store management & creation
-│   │   │   ├── page.tsx        # Stores list table with search & filters
-│   │   │   ├── new/page.tsx    # 5-step store generation wizard
-│   │   │   └── [id]/preview/   # Visual storefront customizer suite
-│   │   ├── preview/[token]/    # Tokenized public client preview & review drawer
-│   │   ├── store/[slug]/       # Standalone generated storefront renderer
-│   │   ├── clients/page.tsx    # Client accounts directory
-│   │   ├── templates/page.tsx  # 8-template architectural showcase
-│   │   ├── products/page.tsx   # Demo product catalog
-│   │   ├── settings/page.tsx   # Platform settings & Team/Security management
-│   │   └── api/                # Secure REST API endpoints
-│   │       ├── auth/           # Auth.js route handler
-│   │       ├── health/         # MongoDB health check endpoint
-│   │       ├── admin/users/    # Admin user management endpoint
-│   │       ├── stores/         # Stores list, create, detail, shares & media
-│   │       ├── preview/        # Public token feedback API
-│   │       ├── clients/        # Clients list & creation endpoints
-│   │       ├── templates/      # Templates list endpoint
-│   │       └── products/       # Products list endpoint
-│   ├── components/
-│   │   ├── layout/             # AppSidebar, AppHeader, AppShell, PageHeader
-│   │   ├── dashboard/          # MetricCards, RecentStoresTable, QuickActions, ActivityFeed
-│   │   ├── storefront/         # StorefrontView (postMessage live-sync renderer)
-│   │   ├── ui/                 # Button, Card, Badge, SearchInput, FilterSelect, Modal, EmptyState
-│   │   └── shared/             # StatusBadge, ShareModal, ClientFeedbackDrawer, SessionWrapper
-│   ├── lib/
-│   │   ├── crypto/             # Secure random tokens & SHA-256 hashing
-│   │   ├── db/                 # MongoDB connection pool, seed & bootstrap scripts
-│   │   ├── repositories/       # Domain repositories (Store, Client, Share, Feedback, Media, etc.)
-│   │   ├── storage/            # Pluggable Storage Provider (Local & S3)
-│   │   └── validation/         # Validation schemas for store, slug, and user
-│   ├── types/                  # TypeScript domain contracts
-│   ├── auth.ts                 # Auth.js configuration & credentials provider
-│   └── middleware.ts           # Route protection middleware
-├── tests/                      # Automated test suite (db, auth, wizard, storefront, customizer, shares, feedback, media)
-├── docs/
-│   ├── PHASE_1_AUDIT.md        # Phase 1 architectural & UI audit
-│   ├── PHASE_2_AUDIT.md        # Phase 2 implementation audit
-│   ├── PHASE_3_AUDIT.md        # Comprehensive Phase 3 implementation audit
-│   ├── ARCHITECTURE.md         # Full architecture blueprint & data flow
-│   └── DEVELOPMENT_LOG.md      # Detailed engineering changelog
-├── .env.example                # Environment variables template
-├── package.json                # Project dependencies and npm scripts
-└── README.md                   # This project guide
-```
+- **Test Runner:** Node.js native test runner via `tsx` (302 passing automated tests)
 
 ---
 
 ## 4. Getting Started
 
 ### Prerequisites
-- Node.js `v18+` or `v20+`
-- npm `v9+` or `v10+`
-- MongoDB instance (Optional; in-memory fallback operates seamlessly without a running MongoDB server)
+- Node.js `v20+` or `v22+`
+- npm `v10+`
+- MongoDB instance or Atlas connection string (Optional for local dev in-memory fallback; required for production)
 
 ### Installation & Development
 
@@ -125,10 +70,16 @@ gridretail/
    cp .env.example .env.local
    ```
 
-3. **Database Setup (Optional if using MongoDB):**
+3. **Database Setup & Index Synchronization:**
    ```bash
+   # Seed default catalog and store templates
    npm run seed
+
+   # Create bootstrap administrator account
    npm run bootstrap-admin
+
+   # Synchronize database indexes (when MONGODB_URI is configured)
+   npm run sync-indexes
    ```
 
 4. **Run the development server:**
@@ -137,7 +88,7 @@ gridretail/
    ```
    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-5. **Sign In Credentials:**
+5. **Default Credentials:**
    - **Administrator:** `admin@gridretail.internal` / `AdminGrid2026!`
    - **Employee:** `sarah.chen@gridretail.internal` / `AdminGrid2026!`
 
@@ -145,18 +96,18 @@ gridretail/
 
 ## 5. Verification & Testing
 
-Run all quality checks before committing:
+Execute the complete quality verification pipeline:
 
 ```bash
-# Execute lint check (ESLint)
+# Execute lint check (ESLint: 0 warnings, 0 errors)
 npm run lint
 
-# Execute TypeScript type-checking
+# Execute TypeScript type-checking (tsc: 0 errors)
 npm run type-check
 
-# Execute automated test suite (42 tests)
+# Execute automated test suite (302 / 302 passing tests)
 npm run test
 
-# Execute production build
+# Execute Next.js production build
 npm run build
 ```

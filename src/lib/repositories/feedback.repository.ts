@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db/mongodb";
+import { getDb, isFallbackAllowed, DatabaseUnavailableError } from "@/lib/db/mongodb";
 import { StoreFeedback } from "@/types/feedback";
 
 let memoryFeedback: StoreFeedback[] = [];
@@ -6,10 +6,16 @@ let memoryFeedback: StoreFeedback[] = [];
 export const FeedbackRepository = {
   async create(feedback: StoreFeedback): Promise<StoreFeedback> {
     const db = await getDb();
+    if (!db && !isFallbackAllowed()) {
+      throw new DatabaseUnavailableError("Cannot create feedback: database is unavailable in production.");
+    }
     if (db) {
       try {
         await db.collection<StoreFeedback>("store_feedback").insertOne({ ...feedback });
       } catch (err) {
+        if (!isFallbackAllowed()) {
+          throw err;
+        }
         console.warn("MongoDB insert error in FeedbackRepository.create:", err);
       }
     }

@@ -35,3 +35,15 @@ export interface CreateNotificationInput {
   storeName: string;
   metadata?: Record<string, unknown>;
 }
+
+export interface AppNotification {
+  id: string;
+  userId?: string;
+  tenantId?: string;
+  type: string;
+  title: string;
+  description: string;
+  time?: string;
+  read: boolean;
+  createdAt: string;
+}

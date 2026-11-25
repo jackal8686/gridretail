@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db/mongodb";
+import { getDb, isFallbackAllowed, DatabaseUnavailableError } from "@/lib/db/mongodb";
 import { PreviewShare, ShareStatus } from "@/types/preview-share";
 
 let memoryShares: PreviewShare[] = [];
@@ -6,10 +6,16 @@ let memoryShares: PreviewShare[] = [];
 export const PreviewShareRepository = {
   async create(share: PreviewShare): Promise<PreviewShare> {
     const db = await getDb();
+    if (!db && !isFallbackAllowed()) {
+      throw new DatabaseUnavailableError("Cannot create preview share: database is unavailable in production.");
+    }
     if (db) {
       try {
         await db.collection<PreviewShare>("preview_shares").insertOne({ ...share });
       } catch (err) {
+        if (!isFallbackAllowed()) {
+          throw err;
+        }
         console.warn("MongoDB insert error in PreviewShareRepository.create:", err);
       }
     }
@@ -59,6 +65,9 @@ export const PreviewShareRepository = {
   async revoke(id: string, revokedBy: string): Promise<PreviewShare | null> {
     const now = new Date().toISOString();
     const db = await getDb();
+    if (!db && !isFallbackAllowed()) {
+      throw new DatabaseUnavailableError("Cannot revoke preview share: database is unavailable in production.");
+    }
     if (db) {
       try {
         await db.collection<PreviewShare>("preview_shares").updateOne(
@@ -72,6 +81,9 @@ export const PreviewShareRepository = {
           }
         );
       } catch (err) {
+        if (!isFallbackAllowed()) {
+          throw err;
+        }
         console.warn("MongoDB update error in PreviewShareRepository.revoke:", err);
       }
     }

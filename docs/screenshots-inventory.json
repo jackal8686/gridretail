@@ -1,0 +1,442 @@
+[
+  {
+    "filename": "card-treatment-block_solid.png",
+    "relativePath": "docs/screenshots/phase14-1/card-treatment-block_solid.png",
+    "sizeBytes": 76303,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Card Treatment Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "card-treatment-bordered.png",
+    "relativePath": "docs/screenshots/phase14-1/card-treatment-bordered.png",
+    "sizeBytes": 76303,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Card Treatment Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "card-treatment-elevated.png",
+    "relativePath": "docs/screenshots/phase14-1/card-treatment-elevated.png",
+    "sizeBytes": 76303,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Card Treatment Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "card-treatment-flat.png",
+    "relativePath": "docs/screenshots/phase14-1/card-treatment-flat.png",
+    "sizeBytes": 76303,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Card Treatment Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "card-treatment-floating.png",
+    "relativePath": "docs/screenshots/phase14-1/card-treatment-floating.png",
+    "sizeBytes": 76303,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Card Treatment Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "card-treatment-soft_rounded.png",
+    "relativePath": "docs/screenshots/phase14-1/card-treatment-soft_rounded.png",
+    "sizeBytes": 76303,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Card Treatment Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "customizer-styling-panel.png",
+    "relativePath": "docs/screenshots/phase14-1/customizer-styling-panel.png",
+    "sizeBytes": 148575,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Visual Customizer UI",
+    "associatedWebsiteType": "Multi-Store Workspace"
+  },
+  {
+    "filename": "footer-business_info.png",
+    "relativePath": "docs/screenshots/phase14-1/footer-business_info.png",
+    "sizeBytes": 112219,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Footer Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "footer-commerce_directory.png",
+    "relativePath": "docs/screenshots/phase14-1/footer-commerce_directory.png",
+    "sizeBytes": 91740,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Footer Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "footer-contact_focused.png",
+    "relativePath": "docs/screenshots/phase14-1/footer-contact_focused.png",
+    "sizeBytes": 76303,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Footer Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "footer-minimal_inline.png",
+    "relativePath": "docs/screenshots/phase14-1/footer-minimal_inline.png",
+    "sizeBytes": 146757,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Footer Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "footer-multi_column.png",
+    "relativePath": "docs/screenshots/phase14-1/footer-multi_column.png",
+    "sizeBytes": 105118,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Footer Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "footer-service_practitioner.png",
+    "relativePath": "docs/screenshots/phase14-1/footer-service_practitioner.png",
+    "sizeBytes": 91256,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Footer Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "hero-asymmetric.png",
+    "relativePath": "docs/screenshots/phase14-1/hero-asymmetric.png",
+    "sizeBytes": 58446,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Hero Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist exclusively)"
+  },
+  {
+    "filename": "hero-centered.png",
+    "relativePath": "docs/screenshots/phase14-1/hero-centered.png",
+    "sizeBytes": 57286,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Hero Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist exclusively)"
+  },
+  {
+    "filename": "hero-editorial.png",
+    "relativePath": "docs/screenshots/phase14-1/hero-editorial.png",
+    "sizeBytes": 64381,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Hero Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist exclusively)"
+  },
+  {
+    "filename": "hero-form_conversion.png",
+    "relativePath": "docs/screenshots/phase14-1/hero-form_conversion.png",
+    "sizeBytes": 73385,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Hero Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist exclusively)"
+  },
+  {
+    "filename": "hero-image_bg.png",
+    "relativePath": "docs/screenshots/phase14-1/hero-image_bg.png",
+    "sizeBytes": 53349,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Hero Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist exclusively)"
+  },
+  {
+    "filename": "hero-media_showcase.png",
+    "relativePath": "docs/screenshots/phase14-1/hero-media_showcase.png",
+    "sizeBytes": 58359,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Hero Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist exclusively)"
+  },
+  {
+    "filename": "hero-minimal.png",
+    "relativePath": "docs/screenshots/phase14-1/hero-minimal.png",
+    "sizeBytes": 51345,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Hero Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist exclusively)"
+  },
+  {
+    "filename": "hero-product_spotlight.png",
+    "relativePath": "docs/screenshots/phase14-1/hero-product_spotlight.png",
+    "sizeBytes": 46577,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Hero Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist exclusively)"
+  },
+  {
+    "filename": "hero-service_booking.png",
+    "relativePath": "docs/screenshots/phase14-1/hero-service_booking.png",
+    "sizeBytes": 70353,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Hero Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist exclusively)"
+  },
+  {
+    "filename": "hero-split.png",
+    "relativePath": "docs/screenshots/phase14-1/hero-split.png",
+    "sizeBytes": 143267,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Hero Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist exclusively)"
+  },
+  {
+    "filename": "nav-appointment_cta.png",
+    "relativePath": "docs/screenshots/phase14-1/nav-appointment_cta.png",
+    "sizeBytes": 57238,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Navigation Header Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "nav-centered_logo.png",
+    "relativePath": "docs/screenshots/phase14-1/nav-centered_logo.png",
+    "sizeBytes": 59351,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Navigation Header Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "nav-commerce_cart.png",
+    "relativePath": "docs/screenshots/phase14-1/nav-commerce_cart.png",
+    "sizeBytes": 59846,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Navigation Header Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "nav-corporate.png",
+    "relativePath": "docs/screenshots/phase14-1/nav-corporate.png",
+    "sizeBytes": 59823,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Navigation Header Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "nav-lead_inquiry.png",
+    "relativePath": "docs/screenshots/phase14-1/nav-lead_inquiry.png",
+    "sizeBytes": 55023,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Navigation Header Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "nav-minimal.png",
+    "relativePath": "docs/screenshots/phase14-1/nav-minimal.png",
+    "sizeBytes": 58446,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Navigation Header Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "nav-mobile-menu-drawer-open.png",
+    "relativePath": "docs/screenshots/phase14-1/nav-mobile-menu-drawer-open.png",
+    "sizeBytes": 27731,
+    "width": 375,
+    "height": 812,
+    "validPng": true,
+    "category": "Navigation Header Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "nav-transparent.png",
+    "relativePath": "docs/screenshots/phase14-1/nav-transparent.png",
+    "sizeBytes": 57158,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "Navigation Header Variation",
+    "associatedWebsiteType": "E-commerce (aura-minimalist)"
+  },
+  {
+    "filename": "responsive-appt-desktop.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-appt-desktop.png",
+    "sizeBytes": 67577,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-appt-laptop.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-appt-laptop.png",
+    "sizeBytes": 57590,
+    "width": 1280,
+    "height": 800,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-appt-mobile.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-appt-mobile.png",
+    "sizeBytes": 36067,
+    "width": 375,
+    "height": 812,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-appt-tablet.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-appt-tablet.png",
+    "sizeBytes": 70297,
+    "width": 768,
+    "height": 1024,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-ecom-desktop.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-ecom-desktop.png",
+    "sizeBytes": 143267,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-ecom-laptop.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-ecom-laptop.png",
+    "sizeBytes": 132160,
+    "width": 1280,
+    "height": 800,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-ecom-mobile.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-ecom-mobile.png",
+    "sizeBytes": 69371,
+    "width": 375,
+    "height": 812,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-ecom-tablet.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-ecom-tablet.png",
+    "sizeBytes": 141377,
+    "width": 768,
+    "height": 1024,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-leadgen-desktop.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-leadgen-desktop.png",
+    "sizeBytes": 152869,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-leadgen-laptop.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-leadgen-laptop.png",
+    "sizeBytes": 139361,
+    "width": 1280,
+    "height": 800,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-leadgen-mobile.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-leadgen-mobile.png",
+    "sizeBytes": 76217,
+    "width": 375,
+    "height": 812,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "responsive-leadgen-tablet.png",
+    "relativePath": "docs/screenshots/phase14-1/responsive-leadgen-tablet.png",
+    "sizeBytes": 159853,
+    "width": 768,
+    "height": 1024,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  },
+  {
+    "filename": "section-verified-statistics-bar.png",
+    "relativePath": "docs/screenshots/phase14-1/section-verified-statistics-bar.png",
+    "sizeBytes": 50967,
+    "width": 1440,
+    "height": 900,
+    "validPng": true,
+    "category": "General Evidence",
+    "associatedWebsiteType": "All Website Types"
+  }
+]

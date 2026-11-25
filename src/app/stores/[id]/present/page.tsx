@@ -22,12 +22,20 @@ import {
   Tablet,
   Monitor,
   ExternalLink,
+  Calendar,
+  Clock,
+  ShieldCheck,
+  Award,
+  Briefcase,
+  UserCheck,
+  FileText,
 } from "lucide-react";
 import { Store, Template, Product } from "@/types";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { DeliveryModal } from "@/components/shared/DeliveryModal";
 import { ShareModal } from "@/components/shared/ShareModal";
 import { cn } from "@/utils/cn";
+import { formatINR } from "@/utils/currency";
 
 const TOTAL_SLIDES = 6;
 
@@ -63,19 +71,19 @@ export default function ClientPresentationPage() {
         const s: Store = data.store;
         setStore(s);
 
-        // Fetch template
-        if (s.templateId) {
-          const tRes = await fetch(`/api/templates`);
-          if (tRes.ok) {
-            const tData = await tRes.json();
-            const foundT = (tData.templates || []).find((t: Template) => t.id === s.templateId);
-            if (foundT) setTemplate(foundT);
-          }
+        // Fetch template and products concurrently
+        const [tRes, pRes] = await Promise.all([
+          s.templateId ? fetch(`/api/templates`) : Promise.resolve(null),
+          fetch(`/api/products?limit=6`),
+        ]);
+
+        if (tRes && tRes.ok) {
+          const tData = await tRes.json();
+          const foundT = (tData.templates || []).find((t: Template) => t.id === s.templateId);
+          if (foundT) setTemplate(foundT);
         }
 
-        // Fetch products
-        const pRes = await fetch(`/api/products?limit=6`);
-        if (pRes.ok) {
+        if (pRes && pRes.ok) {
           const pData = await pRes.json();
           setProducts(pData.products || []);
         }
@@ -159,57 +167,152 @@ export default function ClientPresentationPage() {
     );
   }
 
+  const isAppointments = store.websiteType === "appointments";
+  const isLeadGen = (store.websiteType as string) === "lead_gen" || (store.websiteType as string) === "lead-generation";
+
   const branding = store.branding || {
     primaryColor: template?.colorPalette.primary || "#176B4D",
     secondaryColor: template?.colorPalette.secondary || "#FAF9F6",
     fontFamily: "Inter, sans-serif",
-    heroHeadline: `Welcome to ${store.name}`,
-    heroSubheadline: `Curated ${store.industry} collection designed for modern living.`,
+    heroHeadline: isAppointments
+      ? `Executive Practice for ${store.name}`
+      : isLeadGen
+      ? `Strategic Client Solutions for ${store.name}`
+      : `Welcome to ${store.name}`,
+    heroSubheadline: isAppointments
+      ? `Dedicated ${store.industry} consultation and professional advisory services.`
+      : isLeadGen
+      ? `High-impact ${store.industry} solutions designed for enterprise growth.`
+      : `Curated ${store.industry} collection designed for modern living.`,
     aboutText: store.description,
-    ctaText: "Explore Catalog",
+    ctaText: isAppointments ? "Schedule Consultation" : isLeadGen ? "Request Proposal" : "Explore Catalog",
   };
 
-  const slideTitles = [
-    "Executive Vision & Brand Identity",
-    "Curated E-Commerce Catalog",
-    "Brand Narrative & Trust Signals",
-    "Audience Engagement & Conversion",
-    "Live Interactive Storefront Simulation",
-    "Commercial Next Steps & Delivery",
-  ];
+  const slideTitles = isAppointments
+    ? [
+        "Executive Vision & Practice Positioning",
+        "Curated Professional Services Directory",
+        "Client Trust & Practice Blueprint",
+        "Calendar Integration & Booking Workflow",
+        "Live Interactive Practice Simulator",
+        "Commercial Next Steps & Delivery",
+      ]
+    : isLeadGen
+    ? [
+        "Executive Vision & Market Strategy",
+        "Inquiry Architecture & Capture Flow",
+        "Enterprise Credibility & Governance",
+        "Lead Pipeline Progression & Qualification",
+        "Live Interactive Lead Portal Simulator",
+        "Commercial Next Steps & Delivery",
+      ]
+    : [
+        "Executive Vision & Brand Identity",
+        "Curated E-Commerce Catalog",
+        "Brand Narrative & Trust Signals",
+        "Audience Engagement & Conversion",
+        "Live Interactive Storefront Simulation",
+        "Commercial Next Steps & Delivery",
+      ];
 
-  const presenterNotes: Record<number, string[]> = {
-    1: [
-      `Introduce ${store.clientName} as the focal client for this tailored e-commerce deployment.`,
-      `Highlight how the chosen typography (${branding.fontFamily}) and primary palette (${branding.primaryColor}) elevate their brand positioning.`,
-      `Emphasize that the storefront was generated in under 3 minutes using GridRetail's generative engine.`,
-    ],
-    2: [
-      `Showcase the ${products.length} curated demonstration catalog items.`,
-      `Point out multi-currency support, clear price hierarchies, and high-conversion quick-add cards.`,
-      `Mention that client inventory can be ingested via CSV, Shopify sync, or ERP REST API.`,
-    ],
-    3: [
-      `Walk through the customized brand story written specifically for ${store.clientName}.`,
-      `Emphasize consumer trust elements: Complimentary Courier Delivery, Verified Authenticity, and 30-Day Returns.`,
-      `Demonstrate how trust signals reduce cart abandonment by an estimated 18-24%.`,
-    ],
-    4: [
-      `Focus on long-term client audience retention via the Newsletter VIP subscriber channel.`,
-      `Explain that client leads can flow directly into their CRM or marketing automation suite.`,
-      `Note that custom promotional callouts can be tailored for seasonal sales and campaigns.`,
-    ],
-    5: [
-      `Demonstrate real-time responsiveness by switching between Desktop, Tablet, and Mobile views.`,
-      `Invite the client to click elements live or share the preview link for their executive team.`,
-      `Highlight sub-second page performance and zero layout shifts.`,
-    ],
-    6: [
-      `Summarize current proposal status: ${store.status}.`,
-      `Offer to export the turnkey production archive (.zip) right now or share a secure client review link.`,
-      `Close with next-step timeline: Instant handoff upon client approval.`,
-    ],
-  };
+  const presenterNotes: Record<number, string[]> = isAppointments
+    ? {
+        1: [
+          `Introduce ${store.clientName} as the focal client for this tailored professional appointment practice.`,
+          `Highlight how the chosen typography (${branding.fontFamily}) and primary palette (${branding.primaryColor}) elevate their executive standing.`,
+          `Emphasize that the booking website was generated in under 3 minutes using GridRetail's generative engine.`,
+        ],
+        2: [
+          `Walk through the structured professional services directory and fee structure.`,
+          `Point out multi-practitioner assignment, automated buffer times, and service duration rules.`,
+          `Explain that services and practitioner schedules can be customized through the operator schedule dashboard.`,
+        ],
+        3: [
+          `Review the practice trust framework designed specifically for ${store.clientName}.`,
+          `Emphasize client confidentiality, verified practitioner credentials, and seamless appointment management.`,
+          `Explain how transparent booking policies increase conversion and eliminate scheduling friction.`,
+        ],
+        4: [
+          `Highlight two-way calendar synchronization and automated booking confirmations.`,
+          `Explain that confirmed bookings generate downloadable .ics calendar invites and email reminders.`,
+          `Showcase self-service customer cancellation and rescheduling capabilities.`,
+        ],
+        5: [
+          `Demonstrate real-time responsiveness by switching between Desktop, Tablet, and Mobile views.`,
+          `Invite the client to click elements live or share the preview link for their executive team.`,
+          `Highlight sub-second booking responsiveness and frictionless mobile usability.`,
+        ],
+        6: [
+          `Summarize current proposal status: ${store.status}.`,
+          `Offer to export the turnkey production archive (.zip) right now or share a secure client review link.`,
+          `Close with next-step timeline: Instant handoff upon client approval.`,
+        ],
+      }
+    : isLeadGen
+    ? {
+        1: [
+          `Introduce ${store.clientName} as the focal client for this enterprise lead acquisition portal.`,
+          `Highlight how the chosen typography (${branding.fontFamily}) and primary palette (${branding.primaryColor}) reinforce strategic credibility.`,
+          `Emphasize that the lead generation portal was generated in under 3 minutes using GridRetail's generative engine.`,
+        ],
+        2: [
+          `Walk through the high-conversion inquiry architecture and customizable intake fields.`,
+          `Point out client qualification criteria, required project scope prompts, and anti-spam honeypot protection.`,
+          `Explain that submitted inquiries instantly route to the operator CRM pipeline.`,
+        ],
+        3: [
+          `Walk through enterprise credibility signals crafted specifically for ${store.clientName}.`,
+          `Emphasize strict data privacy compliance, dedicated response SLAs, and custom scope alignment.`,
+          `Demonstrate how high-trust conversion elements generate higher quality qualified inbound inquiries.`,
+        ],
+        4: [
+          `Focus on real-time pipeline acceleration and automated lead scoring (0–100).`,
+          `Explain that inbound leads advance through a 5-stage Kanban CRM (New, Contacted, Qualified, Proposal, Won).`,
+          `Highlight CSV import/export capabilities and CRM integration readiness.`,
+        ],
+        5: [
+          `Demonstrate real-time responsiveness by switching between Desktop, Tablet, and Mobile views.`,
+          `Invite the client to test the live lead intake form and view submission routing.`,
+          `Highlight frictionless form completion across all device sizes.`,
+        ],
+        6: [
+          `Summarize current proposal status: ${store.status}.`,
+          `Offer to export the turnkey production archive (.zip) right now or share a secure client review link.`,
+          `Close with next-step timeline: Instant handoff upon client approval.`,
+        ],
+      }
+    : {
+        1: [
+          `Introduce ${store.clientName} as the focal client for this tailored e-commerce deployment.`,
+          `Highlight how the chosen typography (${branding.fontFamily}) and primary palette (${branding.primaryColor}) elevate their brand positioning.`,
+          `Emphasize that the storefront was generated in under 3 minutes using GridRetail's generative engine.`,
+        ],
+        2: [
+          `Showcase the ${products.length} curated demonstration catalog items.`,
+          `Point out multi-currency support, clear price hierarchies, and high-conversion quick-add cards.`,
+          `Mention that client inventory can be ingested via CSV, Shopify sync, or ERP REST API.`,
+        ],
+        3: [
+          `Walk through the customized brand story written specifically for ${store.clientName}.`,
+          `Emphasize consumer trust elements: Complimentary Courier Delivery, Verified Authenticity, and 30-Day Returns.`,
+          `Demonstrate how trust signals reduce cart abandonment by an estimated 18-24%.`,
+        ],
+        4: [
+          `Focus on long-term client audience retention via the Newsletter VIP subscriber channel.`,
+          `Explain that client leads can flow directly into their CRM or marketing automation suite.`,
+          `Note that custom promotional callouts can be tailored for seasonal sales and campaigns.`,
+        ],
+        5: [
+          `Demonstrate real-time responsiveness by switching between Desktop, Tablet, and Mobile views.`,
+          `Invite the client to click elements live or share the preview link for their executive team.`,
+          `Highlight sub-second page performance and zero layout shifts.`,
+        ],
+        6: [
+          `Summarize current proposal status: ${store.status}.`,
+          `Offer to export the turnkey production archive (.zip) right now or share a secure client review link.`,
+          `Close with next-step timeline: Instant handoff upon client approval.`,
+        ],
+      };
 
   return (
     <div className="fixed inset-0 bg-[#0B1120] text-slate-100 flex flex-col select-none overflow-hidden font-sans">
@@ -357,67 +460,198 @@ export default function ClientPresentationPage() {
                   onClick={handleNext}
                   className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all shadow-lg hover:shadow-emerald-500/20 inline-flex items-center gap-2"
                 >
-                  <span>Explore Curated Catalog</span>
+                  <span>
+                    {isAppointments
+                      ? "Explore Service Portfolio"
+                      : isLeadGen
+                      ? "Explore Inquiry Pipeline"
+                      : "Explore Curated Catalog"}
+                  </span>
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* SLIDE 2: Catalog Showcase */}
+          {/* SLIDE 2: Catalog / Services / Forms Architecture */}
           {currentSlide === 2 && (
             <div className="max-w-5xl w-full space-y-6 animate-in fade-in duration-200">
               <div className="flex items-end justify-between border-b border-slate-800 pb-4">
                 <div>
                   <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-                    Product Architecture
+                    {isAppointments
+                      ? "Practice Offerings"
+                      : isLeadGen
+                      ? "Lead Intake Architecture"
+                      : "Product Architecture"}
                   </span>
                   <h2 className="text-3xl font-extrabold text-white mt-1">
-                    Curated Demonstration Catalog
+                    {isAppointments
+                      ? "Curated Professional Services"
+                      : isLeadGen
+                      ? "High-Conversion Inquiry Capture"
+                      : "Curated Demonstration Catalog"}
                   </h2>
                 </div>
                 <span className="text-xs text-slate-400">
-                  {products.length} Active High-Resolution Pieces
+                  {isAppointments
+                    ? "Multi-Provider Booking Ready"
+                    : isLeadGen
+                    ? "Automated Pipeline Integration"
+                    : `${products.length} Active High-Resolution Pieces`}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {products.map((prod) => (
-                  <div
-                    key={prod.id}
-                    className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors"
-                  >
+              {isAppointments ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
                     <div>
-                      <div
-                        className={cn(
-                          "h-36 rounded-xl flex items-center justify-center font-bold text-xl tracking-wider text-slate-800 relative overflow-hidden mb-3",
-                          prod.thumbnailColor
-                        )}
-                      >
-                        <span>{prod.name.slice(0, 2).toUpperCase()}</span>
-                        <span className="absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-900/90 text-white">
-                          {prod.category}
-                        </span>
+                      <div className="h-28 rounded-xl bg-emerald-950/40 border border-emerald-800/30 flex items-center justify-center text-emerald-400 mb-3">
+                        <Briefcase className="h-10 w-10" />
                       </div>
-                      <h3 className="font-bold text-sm text-white">{prod.name}</h3>
-                      <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                        {prod.description}
+                      <h3 className="font-bold text-base text-white">Initial Consultation</h3>
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                        Comprehensive discovery session, requirements intake, and preliminary advisory roadmap.
                       </p>
                     </div>
-
-                    <div className="pt-3 mt-3 border-t border-slate-800 flex items-center justify-between">
-                      <span className="text-base font-extrabold text-white">
-                        ${prod.price.toFixed(2)}{" "}
-                        <span className="text-xs font-normal text-slate-400">{prod.currency}</span>
+                    <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs">
+                      <span className="font-bold text-white flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" /> 45 Mins
                       </span>
-                      <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
-                        <ShoppingBag className="h-3 w-3" />
-                        <span>Available</span>
+                      <span className="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 font-semibold">
+                        Video / Office
                       </span>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
+                    <div>
+                      <div className="h-28 rounded-xl bg-blue-950/40 border border-blue-800/30 flex items-center justify-center text-blue-400 mb-3">
+                        <Calendar className="h-10 w-10" />
+                      </div>
+                      <h3 className="font-bold text-base text-white">Strategic Advisory Session</h3>
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                        In-depth operational audit, risk evaluation, and customized executive brief delivery.
+                      </p>
+                    </div>
+                    <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs">
+                      <span className="font-bold text-white flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" /> 60 Mins
+                      </span>
+                      <span className="px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 font-semibold">
+                        Senior Partner
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
+                    <div>
+                      <div className="h-28 rounded-xl bg-purple-950/40 border border-purple-800/30 flex items-center justify-center text-purple-400 mb-3">
+                        <Award className="h-10 w-10" />
+                      </div>
+                      <h3 className="font-bold text-base text-white">Retainer Strategy Review</h3>
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                        Quarterly compliance checkpoint, progress review, and multi-team governance alignment.
+                      </p>
+                    </div>
+                    <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs">
+                      <span className="font-bold text-white flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" /> 90 Mins
+                      </span>
+                      <span className="px-2.5 py-1 rounded-md bg-purple-500/10 text-purple-400 font-semibold">
+                        Executive Board
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : isLeadGen ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
+                    <div>
+                      <div className="h-28 rounded-xl bg-emerald-950/40 border border-emerald-800/30 flex items-center justify-center text-emerald-400 mb-3">
+                        <FileText className="h-10 w-10" />
+                      </div>
+                      <h3 className="font-bold text-base text-white">Custom Intake Capture</h3>
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                        Tailored business inquiries collecting corporate contact, service interest, and project requirements.
+                      </p>
+                    </div>
+                    <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs text-emerald-400 font-semibold">
+                      <span>Smart Validation</span>
+                      <span>Honeypot Protected</span>
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
+                    <div>
+                      <div className="h-28 rounded-xl bg-blue-950/40 border border-blue-800/30 flex items-center justify-center text-blue-400 mb-3">
+                        <Award className="h-10 w-10" />
+                      </div>
+                      <h3 className="font-bold text-base text-white">Automated Lead Scoring</h3>
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                        Immediate scoring algorithm evaluates inquiry completeness, timeline urgency, and budget criteria (0–100).
+                      </p>
+                    </div>
+                    <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs text-blue-400 font-semibold">
+                      <span>Real-Time Scoring</span>
+                      <span>Priority Routing</span>
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
+                    <div>
+                      <div className="h-28 rounded-xl bg-purple-950/40 border border-purple-800/30 flex items-center justify-center text-purple-400 mb-3">
+                        <UserCheck className="h-10 w-10" />
+                      </div>
+                      <h3 className="font-bold text-base text-white">5-Stage CRM Pipeline</h3>
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                        Inquiries advance through Kanban stages with notes, task reminders, and RFC-4180 CSV export.
+                      </p>
+                    </div>
+                    <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between text-xs text-purple-400 font-semibold">
+                      <span>Pipeline Kanban</span>
+                      <span>CSV Export Ready</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {products.map((prod) => (
+                    <div
+                      key={prod.id}
+                      className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors"
+                    >
+                      <div>
+                        <div
+                          className={cn(
+                            "h-36 rounded-xl flex items-center justify-center font-bold text-xl tracking-wider text-slate-800 relative overflow-hidden mb-3",
+                            prod.thumbnailColor
+                          )}
+                        >
+                          <span>{prod.name.slice(0, 2).toUpperCase()}</span>
+                          <span className="absolute top-2 right-2 text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-900/90 text-white">
+                            {prod.category}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-sm text-white">{prod.name}</h3>
+                        <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                          {prod.description}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 mt-3 border-t border-slate-800 flex items-center justify-between">
+                        <span className="text-base font-extrabold text-white">
+                          {formatINR(prod.price)}
+                        </span>
+                        <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+                          <ShoppingBag className="h-3 w-3" />
+                          <span>Available</span>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -425,7 +659,7 @@ export default function ClientPresentationPage() {
           {currentSlide === 3 && (
             <div className="max-w-4xl w-full text-center space-y-8 animate-in fade-in duration-200">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                Heritage &amp; Trust Blueprint
+                {isAppointments ? "Practice Trust Framework" : isLeadGen ? "Enterprise Credibility" : "Heritage & Trust Blueprint"}
               </span>
 
               <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
@@ -435,80 +669,191 @@ export default function ClientPresentationPage() {
               <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
                 {branding.aboutText ||
                   store.description ||
-                  `Every element of this custom showcase is aligned with ${store.clientName}'s strategic brand values, audience expectations, and omni-channel ambitions.`}
+                  `Every element of this custom showcase is aligned with ${store.clientName}'s strategic brand values, audience expectations, and operational ambitions.`}
               </p>
 
               {/* Trust Indicators Showcase */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 text-left">
-                <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
-                  <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                    <Truck className="h-5 w-5" />
-                  </div>
-                  <h4 className="font-bold text-sm text-white">Courier Logistics</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Complimentary white-glove shipping on domestic retail orders.
-                  </p>
-                </div>
+                {isAppointments ? (
+                  <>
+                    <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <ShieldCheck className="h-5 w-5" />
+                      </div>
+                      <h4 className="font-bold text-sm text-white">Confidential Advisory</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Strict practitioner confidentiality protocols and encrypted communication channels.
+                      </p>
+                    </div>
 
-                <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
-                  <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5" />
-                  </div>
-                  <h4 className="font-bold text-sm text-white">Authenticity Guarantee</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Direct provenance certificate accompanying every purchase.
-                  </p>
-                </div>
+                    <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <Award className="h-5 w-5" />
+                      </div>
+                      <h4 className="font-bold text-sm text-white">Verified Credentials</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Accredited senior practitioners with proven track records in commercial advisory.
+                      </p>
+                    </div>
 
-                <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
-                  <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                    <RotateCcw className="h-5 w-5" />
-                  </div>
-                  <h4 className="font-bold text-sm text-white">Effortless Returns</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    Seamless 30-day return policy for peace of mind.
-                  </p>
-                </div>
+                    <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <Clock className="h-5 w-5" />
+                      </div>
+                      <h4 className="font-bold text-sm text-white">Flexible Scheduling</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Frictionless online booking, self-service adjustments, and automated calendar conflict mitigation.
+                      </p>
+                    </div>
+                  </>
+                ) : isLeadGen ? (
+                  <>
+                    <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <ShieldCheck className="h-5 w-5" />
+                      </div>
+                      <h4 className="font-bold text-sm text-white">Data Governance &amp; Privacy</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Enterprise-grade data handling compliant with strict organizational security requirements.
+                      </p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <Clock className="h-5 w-5" />
+                      </div>
+                      <h4 className="font-bold text-sm text-white">Dedicated Response SLA</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Automated routing ensures every inbound commercial inquiry receives leadership review within 1 business day.
+                      </p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <Briefcase className="h-5 w-5" />
+                      </div>
+                      <h4 className="font-bold text-sm text-white">Tailored Scope Discovery</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Context-rich intake questions ensure client discovery begins with structured requirements already in hand.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <Truck className="h-5 w-5" />
+                      </div>
+                      <h4 className="font-bold text-sm text-white">Courier Logistics</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Complimentary white-glove shipping on domestic retail orders.
+                      </p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <CheckCircle className="h-5 w-5" />
+                      </div>
+                      <h4 className="font-bold text-sm text-white">Authenticity Guarantee</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Direct provenance certificate accompanying every purchase.
+                      </p>
+                    </div>
+
+                    <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <RotateCcw className="h-5 w-5" />
+                      </div>
+                      <h4 className="font-bold text-sm text-white">Effortless Returns</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        Seamless 30-day return policy for peace of mind.
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
 
-          {/* SLIDE 4: Audience Capture */}
+          {/* SLIDE 4: Audience Capture / Booking Sync / CRM Acceleration */}
           {currentSlide === 4 && (
             <div className="max-w-2xl w-full text-center space-y-6 animate-in fade-in duration-200">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                Audience Retention &amp; Conversion
+                {isAppointments
+                  ? "Practice Automation"
+                  : isLeadGen
+                  ? "Pipeline Acceleration"
+                  : "Audience Retention & Conversion"}
               </span>
 
               <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
-                VIP Subscriber Acquisition
+                {isAppointments
+                  ? "Two-Way Calendar Synchronization"
+                  : isLeadGen
+                  ? "Real-Time Pipeline Progression"
+                  : "VIP Subscriber Acquisition"}
               </h2>
 
               <p className="text-sm text-slate-300 max-w-lg mx-auto">
-                Turn casual visitors into loyal repeat customers with an integrated newsletter channel.
+                {isAppointments
+                  ? "Prevent missed consultations with automated ICS calendar invites, booking receipts, and timely reminder notifications."
+                  : isLeadGen
+                  ? "Transform qualified inbound website traffic into active commercial opportunities with automated stage routing."
+                  : "Turn casual visitors into loyal repeat customers with an integrated newsletter channel."}
               </p>
 
               <div className="p-8 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4">
-                <h3 className="text-lg font-bold text-white">Exclusive Showroom Access</h3>
+                <h3 className="text-lg font-bold text-white">
+                  {isAppointments
+                    ? "Automated Booking Confirmation"
+                    : isLeadGen
+                    ? "Lead Stage Management"
+                    : "Exclusive Showroom Access"}
+                </h3>
                 <p className="text-xs text-slate-400">
-                  Subscribers receive private lookbook releases and priority product allocations.
+                  {isAppointments
+                    ? "Clients receive immediate booking reference codes, calendar attachments, and self-service cancellation links."
+                    : isLeadGen
+                    ? "Inquiries immediately trigger operator alerts and appear in the CRM pipeline with computed lead scores."
+                    : "Subscribers receive private lookbook releases and priority product allocations."}
                 </p>
 
-                <div className="flex gap-2 max-w-md mx-auto pt-2">
-                  <input
-                    type="email"
-                    disabled
-                    placeholder="client.executive@company.com"
-                    className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-400"
-                  />
-                  <button
-                    type="button"
-                    disabled
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-xs whitespace-nowrap opacity-90"
-                  >
-                    Subscribe Demo
-                  </button>
-                </div>
+                {isAppointments ? (
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/20 flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5" />
+                      Google &amp; Outlook (.ics)
+                    </span>
+                    <span className="px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20 flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" />
+                      Email &amp; SMS Alerts
+                    </span>
+                  </div>
+                ) : isLeadGen ? (
+                  <div className="flex items-center justify-center gap-2 pt-2 text-xs">
+                    <span className="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-medium">New</span>
+                    <span className="text-slate-600">&rarr;</span>
+                    <span className="px-2.5 py-1 rounded-md bg-blue-900/60 text-blue-300 font-medium">Contacted</span>
+                    <span className="text-slate-600">&rarr;</span>
+                    <span className="px-2.5 py-1 rounded-md bg-emerald-900/60 text-emerald-300 font-bold">Qualified</span>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 max-w-md mx-auto pt-2">
+                    <input
+                      type="email"
+                      disabled
+                      placeholder="client.executive@company.com"
+                      className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-400"
+                    />
+                    <button
+                      type="button"
+                      disabled
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-xs whitespace-nowrap opacity-90"
+                    >
+                      Subscribe Demo
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -10,3 +10,11 @@ export * from "./feedback";
 export * from "./media";
 export * from "./delivery";
 export * from "./notification";
+export * from "./analytics";
+export * from "./deployment";
+export * from "./comment";
+export * from "./section";
+export * from "./appointment";
+export * from "./lead";
+export * from "./business-profile";
+

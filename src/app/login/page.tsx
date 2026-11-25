@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 function LoginForm() {
@@ -11,14 +11,16 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
-  const [email, setEmail] = useState("admin@gridretail.internal");
-  const [password, setPassword] = useState("AdminGrid2026!");
+  // Form fields remain empty by default - no automatic prepopulation of credentials
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -40,17 +42,10 @@ function LoginForm() {
       }
 
       router.push(callbackUrl);
-      router.refresh();
     } catch {
       setErrorMessage("An unexpected authentication error occurred. Please try again.");
       setIsLoading(false);
     }
-  };
-
-  const fillQuickCredentials = (userEmail: string, userPass: string) => {
-    setEmail(userEmail);
-    setPassword(userPass);
-    setErrorMessage(null);
   };
 
   return (
@@ -64,16 +59,16 @@ function LoginForm() {
           GridRetail
         </h1>
         <p className="text-xs sm:text-sm text-[#66736C] mt-1">
-          Internal E-Commerce Demo Generation Platform
+          GridRetail — Internal Website Generation Platform
         </p>
       </div>
 
       {/* Login Card */}
       <div className="w-full max-w-md bg-white rounded-2xl border border-[#E4E9E5] shadow-lg p-6 sm:p-8">
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-[#18231E]">Sign in to your workspace</h2>
+          <h2 className="text-lg font-semibold text-[#18231E]">Admin Login</h2>
           <p className="text-xs text-[#66736C] mt-0.5">
-            Authorized employee credentials required for platform access.
+            Enter authorized administrator credentials to access the workspace.
           </p>
         </div>
 
@@ -93,6 +88,7 @@ function LoginForm() {
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#66736C]" />
               <input
                 id="email"
+                name="email"
                 type="email"
                 required
                 value={email}
@@ -114,6 +110,7 @@ function LoginForm() {
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#66736C]" />
               <input
                 id="password"
+                name="password"
                 type={showPassword ? "text" : "password"}
                 required
                 value={password}
@@ -140,37 +137,9 @@ function LoginForm() {
             className="w-full mt-2"
             rightIcon={<ArrowRight className="h-4 w-4" />}
           >
-            Sign In to Platform
+            Sign In as Admin
           </Button>
         </form>
-
-        {/* Development Seed Accounts Box */}
-        <div className="mt-6 pt-5 border-t border-[#F0F4F1] space-y-2.5">
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#66736C]">
-            <ShieldCheck className="h-3.5 w-3.5 text-[#16804A]" />
-            <span>Authorized Test Accounts (Bootstrap)</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => fillQuickCredentials("admin@gridretail.internal", "AdminGrid2026!")}
-              className="p-2 rounded-lg border border-[#E4E9E5] bg-[#FAF9F6] text-left hover:border-[#176B4D] hover:bg-[#E2F5E9] transition-colors group cursor-pointer"
-            >
-              <p className="font-semibold text-[#18231E] group-hover:text-[#176B4D]">Administrator</p>
-              <p className="text-[10px] text-[#66736C]">Full permissions</p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => fillQuickCredentials("sarah.chen@gridretail.internal", "AdminGrid2026!")}
-              className="p-2 rounded-lg border border-[#E4E9E5] bg-[#FAF9F6] text-left hover:border-[#176B4D] hover:bg-[#E2F5E9] transition-colors group cursor-pointer"
-            >
-              <p className="font-semibold text-[#18231E] group-hover:text-[#176B4D]">Employee</p>
-              <p className="text-[10px] text-[#66736C]">Store creation</p>
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Security notice footer */}

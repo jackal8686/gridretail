@@ -4,8 +4,18 @@ import { PreviewShareRepository } from "@/lib/repositories/preview-share.reposit
 import { FeedbackRepository } from "@/lib/repositories/feedback.repository";
 import { StoreRepository } from "@/lib/repositories/store.repository";
 import { ActivityRepository } from "@/lib/repositories/activity.repository";
+import { AnalyticsRepository } from "@/lib/repositories/analytics.repository";
 import { StoreFeedback, FeedbackType } from "@/types/feedback";
 import { NotificationService } from "@/lib/notifications/notification-service";
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 export async function GET(
   _request: NextRequest,
@@ -78,7 +88,7 @@ export async function POST(
       authorName: cleanAuthor,
       authorEmail: authorEmail ? String(authorEmail).trim() : undefined,
       type: feedbackType,
-      message: message.trim(),
+      message: escapeHtml(message.trim()),
       createdAt: new Date().toISOString(),
     };
 
@@ -135,6 +145,38 @@ export async function POST(
       } catch (notifErr) {
         console.warn("Failed to dispatch feedback notification:", notifErr);
       }
+    }
+
+    // Record analytics feedback event
+    await AnalyticsRepository.recordEvent({
+      eventType: "feedback_submitted",
+      storeId: store.id,
+      storeName: store.name,
+      clientId: store.clientId,
+      clientName: store.clientName,
+      industry: store.industry,
+      templateId: store.templateId,
+      visitorSessionId: share.id,
+      metadata: {
+        feedbackType,
+        authorName: cleanAuthor,
+      },
+    });
+
+    if (feedbackType === "approval") {
+      await AnalyticsRepository.recordEvent({
+        eventType: "proposal_approved",
+        storeId: store.id,
+        storeName: store.name,
+        clientId: store.clientId,
+        clientName: store.clientName,
+        industry: store.industry,
+        templateId: store.templateId,
+        visitorSessionId: share.id,
+        metadata: {
+          authorName: cleanAuthor,
+        },
+      });
     }
 
     return NextResponse.json({ feedback: saved }, { status: 201 });

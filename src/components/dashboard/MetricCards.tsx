@@ -1,31 +1,48 @@
 import React from "react";
-import { Store, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Store as StoreIcon, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
-import { DashboardMetrics } from "@/types";
+import { DashboardMetrics, Store } from "@/types";
 
 interface MetricCardsProps {
   metrics: DashboardMetrics;
+  stores?: Store[];
 }
 
-export function MetricCards({ metrics }: MetricCardsProps) {
+export function MetricCards({ metrics, stores = [] }: MetricCardsProps) {
+  const uniqueClients =
+    new Set(stores.map((s) => s.clientName || s.clientId).filter(Boolean)).size ||
+    metrics.totalClients ||
+    0;
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const createdThisMonth = stores.filter((s) => {
+    if (!s.createdAt) return false;
+    const d = new Date(s.createdAt);
+    return !isNaN(d.getTime()) && d >= startOfMonth;
+  }).length;
+
   const cards = [
     {
       title: "Total Stores",
       value: metrics.totalStores,
-      subtitle: "Across 6 active clients",
-      icon: Store,
+      subtitle:
+        uniqueClients > 0
+          ? `Across ${uniqueClients} client account${uniqueClients === 1 ? "" : "s"}`
+          : "Multi-tenant directory",
+      icon: StoreIcon,
       iconColor: "text-[#176B4D]",
       iconBg: "bg-[#E2F5E9]",
-      delta: "+2 this month",
+      delta: createdThisMonth > 0 ? `+${createdThisMonth} this month` : "Active platform",
     },
     {
       title: "In Progress",
       value: metrics.inProgress,
-      subtitle: "Catalog & theme drafting",
+      subtitle: "Drafting & customization",
       icon: Clock,
       iconColor: "text-[#176B4D]",
       iconBg: "bg-[#E2F5E9]",
-      delta: "2 stores editing",
+      delta: `${metrics.inProgress} active draft${metrics.inProgress === 1 ? "" : "s"}`,
     },
     {
       title: "Pending Review",
@@ -34,16 +51,16 @@ export function MetricCards({ metrics }: MetricCardsProps) {
       icon: AlertCircle,
       iconColor: "text-[#B7791F]",
       iconBg: "bg-[#FEF7E6]",
-      delta: "1 demo ready",
+      delta: metrics.pendingReview > 0 ? `${metrics.pendingReview} in review` : "All reviewed",
     },
     {
       title: "Published Stores",
       value: metrics.published,
-      subtitle: "Live demo environments",
+      subtitle: "Live client websites",
       icon: CheckCircle2,
       iconColor: "text-[#16804A]",
       iconBg: "bg-[#EAF7EE]",
-      delta: "100% SLA uptime",
+      delta: `${metrics.published} live`,
     },
   ];
 
